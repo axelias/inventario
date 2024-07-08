@@ -2,4 +2,4 @@ babel
 pandas
 openpyxl
 streamlit
-streamlit-st_aggrid
+streamlit-aggrid
