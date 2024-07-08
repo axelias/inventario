@@ -17,10 +17,7 @@ Contrasena = "inv247"
 
 # Authenticate users
 def authenticate(username, password):
-    if username == Usuario and password == Contrasena:
-        return True
-    else:
-        return False
+    return username == Usuario and password == Contrasena
 
 # Streamlit app
 # Session state to track authentication status
@@ -32,10 +29,6 @@ if st.session_state.authenticated:
     salir = st.sidebar.button("Salir")
     if salir:
         st.session_state.authenticated = False
-
-        # Clear the username and password inputs
-        username = ""
-        password = ""
 
 # Authentication form and main content
 if not st.session_state.authenticated:
@@ -56,7 +49,25 @@ if st.session_state.authenticated:
     st.title("Inventario para Ventas")  # Displaying the title only when authenticated
     
     # Load existing data to get "No. Parte" values
-    df_current = pd.read_excel(excel_file, engine='openpyxl')  # Explicitly specify engine here
+    try:
+        df_current = pd.read_excel(excel_file, engine='openpyxl')  # Explicitly specify engine here
+    except Exception as e:
+        st.error(f"Error loading Excel file: {e}")
+        df_current = pd.DataFrame()  # Initialize an empty DataFrame
+
+    # Convert currency columns to float after removing dollar signs
+    df_current["Salida (Valor)"] = df_current["Salida (Valor)"].replace('[\$,]', '', regex=True).astype(float)
+    df_current["Existencia Final (Valor)"] = df_current["Existencia Final (Valor)"].replace('[\$,]', '', regex=True).astype(float)
+
+    total_existencia_inicial_valor = df_current["Salida (Valor)"].sum()
+    total_existencia_final_valor = df_current["Existencia Final (Valor)"].sum()
+
+    # Display running totals as metrics
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric(label="Existencia Inicial (Valor)", value=f"${total_existencia_inicial_valor:.2f}")
+    with col2:
+        st.metric(label="Total Existencia Final (Valor)", value=f"${total_existencia_final_valor:.2f}")
 
     no_parte_values = df_current["No. Parte"].dropna().unique().tolist()
 
@@ -76,8 +87,11 @@ if st.session_state.authenticated:
             return df_current[df_current["No. Parte"] == part_number].iloc[0]
         return pd.Series({
             "Fecha": pd.to_datetime("today"),
+            "Descripcion": "",
             "Unidad": "Uno",
+            "Costo p/ Unidad": "$0.00",
             "Existencia Inicial": 0,
+            "Existencia Inicial (Valor)": "$0.00",
             "Entrada (Cantidad)": 0,
             "Entrada (Valor)": "$0.00",
             "Salida (Cantidad)": 0,
@@ -90,19 +104,27 @@ if st.session_state.authenticated:
     current_data = get_current_data(no_parte)
 
     # Set the locale to Spanish
-    # locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+    try:
+        locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+    except locale.Error:
+        st.warning("Locale setting failed. Default locale will be used.")
 
     # Input fields in the sidebar
     with st.sidebar.expander("Detalles de Inventario", expanded=True):
-        
         fecha = st.date_input("Fecha", pd.to_datetime(current_data["Fecha"]), format="DD-MM-YYYY")
         fecha_str = fecha.strftime('%d de %B de %Y')
 
+        descripcion = st.text_input("Descripcion", value=str(current_data["Descripcion"]))
+
         unidad = st.selectbox("Unidad", options=["Uno", "Par"], index=["Uno", "Par"].index(current_data["Unidad"]))
         
-        costo_por_unidad = st.number_input("Costo p/ Unidad", format="%.2f", value=float(current_data.get("Costo p/ Unidad", 0.0)))
+        # Remove dollar sign for conversion to float
+        costo_por_unidad = st.number_input("Costo p/ Unidad", format="%.2f", value=float(str(current_data.get("Costo p/ Unidad", "0.00")).replace('$', '')))
         
         existencia_inicial = st.number_input("Existencia Inicial", step=1, format="%d", value=int(current_data["Existencia Inicial"]))
+
+        valor_existencia_inicial = existencia_inicial * costo_por_unidad
+        st.text_input("Entrada (Valor)", value=f"${valor_existencia_inicial:.2f}", key="valor_existencia_inicial", disabled=True)
         
         cantidad_entrada = st.number_input("Entrada (Cantidad)", step=1, format="%d", value=int(current_data["Entrada (Cantidad)"]))
 
@@ -129,9 +151,11 @@ if st.session_state.authenticated:
             # Create a new DataFrame with the input data
             new_data = pd.DataFrame({
                 "Fecha": [fecha.strftime('%d/%m/%Y')],
+                "Descripcion": [descripcion],
                 "No. Parte": [no_parte],
                 "Unidad": [unidad],
                 "Existencia Inicial": [existencia_inicial],
+                "Existencia Inicial (Valor)": [f"${valor_existencia_inicial:.2f}"],
                 "Entrada (Cantidad)": [cantidad_entrada],
                 "Entrada (Valor)": [f"${valor_entrada:.2f}"],
                 "Salida (Cantidad)": [cantidad_salida],
@@ -142,14 +166,20 @@ if st.session_state.authenticated:
             })
 
             # Write data to Excel, overwriting existing sheet
-            with pd.ExcelWriter(excel_file, engine='openpyxl', mode='w') as writer:
-                new_data.to_excel(writer, index=False, header=True, sheet_name='Sheet1')
-
-            st.sidebar.success("¡Datos guardados exitosamente!")
+            try:
+                with pd.ExcelWriter(excel_file, engine='openpyxl', mode='w') as writer:
+                    new_data.to_excel(writer, index=False, header=True, sheet_name='Sheet1')
+                st.sidebar.success("¡Datos guardados exitosamente!")
+            except Exception as e:
+                st.sidebar.error(f"Error saving data: {e}")
 
     # Display the current data in the Excel file in the main page
     st.header("Datos Actuales")
-    df_current = pd.read_excel(excel_file, engine='openpyxl')
+    try:
+        df_current = pd.read_excel(excel_file, engine='openpyxl')
+    except Exception as e:
+        st.error(f"Error loading Excel file: {e}")
+        df_current = pd.DataFrame()  # Initialize an empty DataFrame
 
     # Editable data grid in the main page
     gb = GridOptionsBuilder.from_dataframe(df_current)
@@ -177,6 +207,9 @@ if st.session_state.authenticated:
     df_edited = pd.DataFrame(grid_response['data'])
 
     if st.button("Actualizar Datos"):
-        with pd.ExcelWriter(excel_file, engine='openpyxl', mode='w') as writer:
-            df_edited.to_excel(writer, index=False)
-        st.success("¡Datos actualizados exitosamente!")
+        try:
+            with pd.ExcelWriter(excel_file, engine='openpyxl', mode='w') as writer:
+                df_edited.to_excel(writer, index=False)
+            st.success("¡Datos actualizados exitosamente!")
+        except Exception as e:
+            st.error(f"Error updating data: {e}")
