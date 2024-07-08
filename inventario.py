@@ -90,7 +90,7 @@ if st.session_state.authenticated:
     current_data = get_current_data(no_parte)
 
     # Set the locale to Spanish
-    locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+    # locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
 
     # Input fields in the sidebar
     with st.sidebar.expander("Detalles de Inventario", expanded=True):
