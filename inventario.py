@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
+import streamlit-aggrid
 import os
 from babel.dates import format_date
 import locale
