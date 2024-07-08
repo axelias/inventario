@@ -1,5 +1,4 @@
-babel==2.10.0
-pandas==1.4.0
-openpyxl==3.0.9
-streamlit==1.5.0
-streamlit-aggrid==0.2.3
+babel
+pandas
+openpyxl
+streamlit
