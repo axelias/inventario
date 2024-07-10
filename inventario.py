@@ -1,12 +1,9 @@
 import streamlit as st
 import pandas as pd
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
-import os
-from babel.dates import format_date
-import locale
 
 # Set the width of the Streamlit page
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide", initial_sidebar_state="expanded")
 
 # Define the path to the Excel file
 excel_file = 'data.xlsx'
@@ -19,7 +16,6 @@ Contrasena = "inv247"
 def authenticate(username, password):
     return username == Usuario and password == Contrasena
 
-# Streamlit app
 # Session state to track authentication status
 if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
@@ -55,29 +51,34 @@ if st.session_state.authenticated:
         st.error(f"Error loading Excel file: {e}")
         df_current = pd.DataFrame()  # Initialize an empty DataFrame
 
+    
     # Convert currency columns to float after removing dollar signs
-    df_current["Salida (Valor)"] = df_current["Salida (Valor)"].replace('[\$,]', '', regex=True).astype(float)
-    df_current["Existencia Final (Valor)"] = df_current["Existencia Final (Valor)"].replace('[\$,]', '', regex=True).astype(float)
+    currency_columns = ["Existencia Inicial (Valor)", "Existencia Actual (Valor)"]
+    for col in currency_columns:
+        df_current[col] = df_current[col].replace('[\$,]', '', regex=True).astype(float)
 
-    total_existencia_inicial_valor = df_current["Salida (Valor)"].sum()
-    total_existencia_final_valor = df_current["Existencia Final (Valor)"].sum()
+    total_existencia_inicial_valor = df_current["Existencia Inicial (Valor)"].sum()
+    total_existencia_actual_valor = df_current["Existencia Actual (Valor)"].sum()
 
     # Display running totals as metrics
-    col1, col2 = st.columns(2)
+    col1, col2 = st.columns([1, 1])
+
     with col1:
-        st.metric(label="Existencia Inicial (Valor)", value=f"${total_existencia_inicial_valor:.2f}")
+        st.metric(label="Inventario Inicial", value=f"${total_existencia_inicial_valor:.2f}")
+
     with col2:
-        st.metric(label="Total Existencia Final (Valor)", value=f"${total_existencia_final_valor:.2f}")
+        st.metric(label="Inventario Existente", value=f"${total_existencia_actual_valor:.2f}")
+
 
     no_parte_values = df_current["No. Parte"].dropna().unique().tolist()
 
     # Select or input new "No. Parte" in the sidebar
     st.sidebar.header("Detalles del Articulo")
+    
     no_parte_selection = st.sidebar.selectbox("Seleccionar o Ingresar No. Parte", options=["Seleccionar existente"] + no_parte_values + ["Ingresar nuevo"])
-    if no_parte_selection == "Ingresar nuevo":
-        no_parte = st.sidebar.text_input("No. Parte", "")
-    elif no_parte_selection == "Seleccionar existente":
-        no_parte = st.sidebar.selectbox("No. Parte", options=no_parte_values)
+    
+    if no_parte_selection in ["Ingresar nuevo", "Seleccionar existente"]:
+        no_parte = st.sidebar.text_input("No. Parte", "") if no_parte_selection == "Ingresar nuevo" else st.sidebar.selectbox("No. Parte", options=no_parte_values)
     else:
         no_parte = no_parte_selection
 
@@ -88,90 +89,99 @@ if st.session_state.authenticated:
         return pd.Series({
             "Fecha": pd.to_datetime("today"),
             "Descripcion": "",
+            "No. Parte": "",
             "Unidad": "Uno",
-            "Costo p/ Unidad": "$0.00",
+            "Costo por Unidad": 0.00,  # Default to 0.00 for float conversion
             "Existencia Inicial": 0,
-            "Existencia Inicial (Valor)": "$0.00",
+            "Existencia Inicial (Valor)": 0.00,  # Default to 0.00 for float conversion
             "Entrada (Cantidad)": 0,
-            "Entrada (Valor)": "$0.00",
+            "Entrada (Valor)": 0.00,  # Default to 0.00 for float conversion
             "Salida (Cantidad)": 0,
-            "Salida (Valor)": "$0.00",
-            "Existencia Final": 0,
-            "Existencia Final (Valor)": "$0.00",
+            "Existencia Actual": 0,
+            "Existencia Actual (Valor)": 0.00,  # Default to 0.00 for float conversion
             "Perdida": 0
         })
 
     current_data = get_current_data(no_parte)
 
-    # Set the locale to Spanish
-    try:
-        locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
-    except locale.Error:
-        st.warning("Locale setting failed. Default locale will be used.")
-
     # Input fields in the sidebar
     with st.sidebar.expander("Detalles de Inventario", expanded=True):
+        
         fecha = st.date_input("Fecha", pd.to_datetime(current_data["Fecha"]), format="DD-MM-YYYY")
-        fecha_str = fecha.strftime('%d de %B de %Y')
-
         descripcion = st.text_input("Descripcion", value=str(current_data["Descripcion"]))
 
         unidad = st.selectbox("Unidad", options=["Uno", "Par"], index=["Uno", "Par"].index(current_data["Unidad"]))
         
-        # Remove dollar sign for conversion to float
-        costo_por_unidad = st.number_input("Costo p/ Unidad", format="%.2f", value=float(str(current_data.get("Costo p/ Unidad", "0.00")).replace('$', '')))
+        costo_por_unidad_str = st.text_input("Costo por Unidad", value=f"${current_data['Costo por Unidad']:.2f}")
+        costo_por_unidad = float(costo_por_unidad_str.replace('$', '')) if costo_por_unidad_str.strip() != '' else 0.00
         
         existencia_inicial = st.number_input("Existencia Inicial", step=1, format="%d", value=int(current_data["Existencia Inicial"]))
 
-        valor_existencia_inicial = existencia_inicial * costo_por_unidad
-        st.text_input("Entrada (Valor)", value=f"${valor_existencia_inicial:.2f}", key="valor_existencia_inicial", disabled=True)
-        
         cantidad_entrada = st.number_input("Entrada (Cantidad)", step=1, format="%d", value=int(current_data["Entrada (Cantidad)"]))
-
-        # Ensure numeric inputs handle None gracefully
-        def get_int_value(value):
-            return int(value) if pd.notna(value) else 0
-
-        valor_entrada = cantidad_entrada * costo_por_unidad
-        st.text_input("Entrada (Valor)", value=f"${valor_entrada:.2f}", key="valor_entrada", disabled=True)
-
-        cantidad_salida = st.number_input("Salida (Cantidad)", step=1, format="%d", value=get_int_value(current_data.get("Salida (Cantidad)")))
         
-        valor_salida = cantidad_salida * costo_por_unidad
-        st.text_input("Salida (Valor)", value=f"${valor_salida:.2f}", key="valor_salida", disabled=True)
+        cantidad_salida = st.number_input("Salida (Cantidad)", step=1, format="%d", value=int(current_data["Salida (Cantidad)"]))
 
-        existencia_final = st.number_input("Existencia Final", step=1, format="%d", value=get_int_value(current_data.get("Existencia Final")))
+        existencia_actual_calculated = existencia_inicial + cantidad_entrada - cantidad_salida
         
-        valor_existencia = existencia_final * costo_por_unidad
-        st.text_input("Existencia (Valor)", value=f"${valor_existencia:.2f}", key="valor_existencia", disabled=True)
+        st.number_input("Existencia Actual", value=existencia_actual_calculated, step=1, format="%d", key="existencia_actual", disabled=True)
 
-        perdida = st.number_input("Perdida", step=1, format="%d", value=get_int_value(current_data.get("Perdida")))
+        valor_existencia_actual_calculated = existencia_actual_calculated * costo_por_unidad
+        st.text_input("Existencia Actual (Valor)", value=f"${valor_existencia_actual_calculated:.2f}", key="valor_existencia_actual", disabled=True)
+
+        perdida = st.number_input("Perdida", step=1, format="%d", value=int(current_data["Perdida"]))
 
         if st.button("Guardar"):
             # Create a new DataFrame with the input data
-            new_data = pd.DataFrame({
-                "Fecha": [fecha.strftime('%d/%m/%Y')],
-                "Descripcion": [descripcion],
-                "No. Parte": [no_parte],
-                "Unidad": [unidad],
-                "Existencia Inicial": [existencia_inicial],
-                "Existencia Inicial (Valor)": [f"${valor_existencia_inicial:.2f}"],
-                "Entrada (Cantidad)": [cantidad_entrada],
-                "Entrada (Valor)": [f"${valor_entrada:.2f}"],
-                "Salida (Cantidad)": [cantidad_salida],
-                "Salida (Valor)": [f"${valor_salida:.2f}"],
-                "Existencia Final": [existencia_final],
-                "Existencia Final (Valor)": [f"${valor_existencia:.2f}"],
-                "Perdida": [perdida]
-            })
-
-            # Write data to Excel, overwriting existing sheet
+            if no_parte in no_parte_values:
+                # Update existing row
+                idx = df_current.index[df_current["No. Parte"] == no_parte].tolist()
+                if idx:
+                    idx = idx[0]
+                    df_current.loc[idx, "Fecha"] = fecha.strftime('%d/%m/%Y')
+                    df_current.loc[idx, "Descripcion"] = descripcion
+                    df_current.loc[idx, "Unidad"] = unidad
+                    df_current.loc[idx, "Costo por Unidad"] = costo_por_unidad
+                    df_current.loc[idx, "Existencia Inicial"] = existencia_inicial
+                    df_current.loc[idx, "Existencia Inicial (Valor)"] = f"${existencia_inicial * costo_por_unidad:.2f}"
+                    df_current.loc[idx, "Entrada (Cantidad)"] = cantidad_entrada
+                    df_current.loc[idx, "Salida (Cantidad)"] = cantidad_salida
+                    df_current.loc[idx, "Existencia Actual"] = existencia_actual_calculated
+                    df_current.loc[idx, "Existencia Actual (Valor)"] = f"${valor_existencia_actual_calculated:.2f}"
+                    df_current.loc[idx, "Perdida"] = perdida
+            else:
+                # Append new row
+                new_data = pd.DataFrame({
+                    "Fecha": [fecha.strftime('%d/%m/%Y')],
+                    "Descripcion": [descripcion],
+                    "No. Parte": [no_parte],
+                    "Unidad": [unidad],
+                    "Costo por Unidad": [costo_por_unidad],
+                    "Existencia Inicial": [existencia_inicial],
+                    "Existencia Inicial (Valor)": [f"${existencia_inicial * costo_por_unidad:.2f}"],
+                    "Entrada (Cantidad)": [cantidad_entrada],
+                    "Salida (Cantidad)": [cantidad_salida],
+                    "Existencia Actual": [existencia_actual_calculated],
+                    "Existencia Actual (Valor)": [f"${valor_existencia_actual_calculated:.2f}"],
+                    "Perdida": [perdida]
+                })
+                df_current = pd.concat([df_current, new_data], ignore_index=True)
+            
+            # Write all data to Excel
             try:
-                with pd.ExcelWriter(excel_file, engine='openpyxl', mode='w') as writer:
-                    new_data.to_excel(writer, index=False, header=True, sheet_name='Sheet1')
+                df_current.to_excel(excel_file, index=False, header=True, sheet_name='Sheet1')
                 st.sidebar.success("¡Datos guardados exitosamente!")
             except Exception as e:
-                st.sidebar.error(f"Error saving data: {e}")
+                st.sidebar.error(f"Error al guardar datos: {e}")
+
+        # Delete button
+        if st.button("Borrar"):
+            if no_parte in no_parte_values:
+                df_current = df_current[df_current["No. Parte"] != no_parte]
+                try:
+                    df_current.to_excel(excel_file, index=False, header=True, sheet_name='Sheet1')
+                    st.sidebar.success(f"¡Articulo {no_parte} borrado exitosamente!")
+                except Exception as e:
+                    st.sidebar.error(f"Error al borrar el articulo: {e}")
 
     # Display the current data in the Excel file in the main page
     st.header("Datos Actuales")
@@ -183,7 +193,7 @@ if st.session_state.authenticated:
 
     # Editable data grid in the main page
     gb = GridOptionsBuilder.from_dataframe(df_current)
-    gb.configure_default_column(editable=True)
+    gb.configure_default_column(editable=False)  # Make all columns non-editable by default
     gridOptions = gb.build()
 
     # Function to customize grid options
@@ -208,8 +218,7 @@ if st.session_state.authenticated:
 
     if st.button("Actualizar Datos"):
         try:
-            with pd.ExcelWriter(excel_file, engine='openpyxl', mode='w') as writer:
-                df_edited.to_excel(writer, index=False)
+            df_edited.to_excel(excel_file, index=False, header=True, sheet_name='Sheet1')
             st.success("¡Datos actualizados exitosamente!")
         except Exception as e:
-            st.error(f"Error updating data: {e}")
+            st.error(f"Error al actualizar datos: {e}")
