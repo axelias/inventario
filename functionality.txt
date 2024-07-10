@@ -1,8 +1,8 @@
-- Summary:
-  - Widgets displaying the total value of initial merchandise, sold items, and items in stock, as well as the percentage of products in inventory.
+- Summary (Resumen):
+  - Widgets displaying the total value of initial merchandise, value of sold items, and value of items in stock, as well as the percentage of products in inventory.
   - Chart showing totals of items in stock, sold items, and loss per product.
-- Sales:
+- Sales (Ventas):
   - Weekly report
-- Inventory:
+- Inventory (Inventario):
   - List of products with current totals
   - Log of inventory changes
