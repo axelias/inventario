@@ -1,0 +1,17 @@
+credentials:
+  usernames:
+    admin:
+      email: hania502@hotmail.com
+      name: Hania Arif
+      password: $2b$12$Xu2JjAyrmSCvOe.z8R4g4.IU6q8fAOj6AnzDrrYMeq/WXYxjKlXqm # To be replaced with hashed password
+    # rbriggs:
+    #   email: rbriggs@gmail.com
+    #   name: Rebecca Briggs
+    #   password: def # To be replaced with hashed password
+cookie:
+  expiry_days: 30
+  key: admin_signature_key # Must be string
+  name: admin_cookie
+preauthorized:
+  emails:
+  - hania502@hotmail.com
