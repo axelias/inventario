@@ -26,6 +26,8 @@ class DataController:
         #clean data and convert data types
         self.data["Existencia Actual (Valor)"] = self.data["Existencia Actual (Valor)"].replace(r'[\$,]', '', regex=True).astype(float)
 
+        self.data.sort_values(by = 'Created', ascending = False, inplace = True)
+
         #extract part numbers
         self.part_numbers = self.data[self.data["Deleted"] != 1]["No. Parte"].dropna().unique().tolist()
 
@@ -34,7 +36,7 @@ class DataController:
     def save_data(self, row):
         # print(row)
         row = pd.DataFrame([row], columns = self.data.columns)
-        self.data = pd.concat([self.data, row])
+        self.data = pd.concat([row, self.data])
         # print(self.data)
         self.save_data_to_excel()
         
@@ -62,7 +64,30 @@ class DataController:
             result['Unidad'] = ['Uno']
 
             result.fillna(0, inplace = True)
+
         return result.iloc[0]
+    
+    def fitler_summary_by_part_number(self, part_number):
+        result = self.totals_summary[(self.totals_summary["No. Parte"] == part_number)]
+        
+        if len(result) < 1:
+            result = pd.DataFrame([[np.nan] * len(result.columns)], columns = result.columns)
+            result['Fecha'] = [pd.to_datetime("today")]
+            result['Created'] = [pd.to_datetime("today")]
+
+            result['Descripcion'] = ['']
+            result['No. Parte'] = ['']
+            result['Unidad'] = ['Uno']
+
+            result.fillna(0, inplace = True)
+            result = result.convert_dtypes()
+            
+        else:
+            result['Costo por Unidad'] = result['Costo por Unidad'].str.replace('$', '').astype(float)    
+            result['Fecha'] = self.data[(self.data["No. Parte"] == part_number) & (self.data["Deleted"] != 1)].sort_values(by = 'Created', ascending = False)['Fecha'].iloc[0]
+        
+        return result.iloc[0]
+
         
     def get_data_totals_summary(self):
         current_data = self.data[(self.data["Deleted"] != 1)]
@@ -75,7 +100,8 @@ class DataController:
         summary = pd.merge(finals, totals,  on='No. Parte', how='left')
         summary['Total Investment'] = summary['Costo por Unidad'] * summary['Entrada (Cantidad)']
         summary = summary[['No. Parte', 'Descripcion', 'Unidad', 'Costo por Unidad', 'Entrada (Cantidad)', 'Salida (Cantidad)', 'Perdida', 'Existencia Actual', 'Total Investment', 'Existencia Actual (Valor)']]
-        summary[['Total Investment', 'Existencia Actual (Valor)']] = summary[['Total Investment', 'Existencia Actual (Valor)']].apply(lambda x: x.apply(lambda y: f'${y}'))
+        cols = ['Total Investment', 'Existencia Actual (Valor)', 'Costo por Unidad']
+        summary[cols] = summary[cols].apply(lambda x: x.apply(lambda y: f'${y}'))
         self.totals_summary = summary
 
     def get_initial_investment(self):
@@ -88,4 +114,14 @@ class DataController:
     
     def get_sold_value(self):
         return self.get_initial_investment() - self.get_existing_investment()
+    
+    def get_history(self):
+        history = self.data.copy(deep = True)
+        cols = ['Existencia Actual (Valor)', 'Costo por Unidad']
+        history[cols] = history[cols].apply(lambda x: x.apply(lambda y: f'${y}'))
+        # if not pd.api.types.is_datetime64_any_dtype(history['Fecha']):
+        #     history['Fecha'] = pd.to_datetime(history['Fecha'], format='%d/%m/%Y', errors='coerce')
+        history['Fecha'] = history['Fecha'].dt.strftime('%d/%m/%Y')
+        return history
+
 
