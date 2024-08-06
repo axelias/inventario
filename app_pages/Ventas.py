@@ -34,30 +34,38 @@ class Ventas(AuthController, DataController):
             self.show_history()
 
     def show_total_weekly_sales(self):
-        col1, col2 = st.columns(2)
+        total_weekly_sales, total_weekly_sales_amount = self.get_total_weekly_sales()
+        total_weekly_losses, total_weekly_losses_amount = self.get_total_weekly_losses()
+
+        col1, col2, col3, col4 = st.columns(4)
         with col1:
-            total_initial_inv = self.get_total_weekly_sales()
-            st.metric(label="Total Weekly Sales", value=f"${total_initial_inv}", delta="8%")
+            
+            st.metric(label="Total Weekly Sales", value=f"{total_weekly_sales} Units", delta="8%")
         with col2:
-            total_existing_inv = self.get_total_weekly_losses()
-            st.metric(label="Total Week Losses", value=f"${total_existing_inv}", delta="8%")
+            st.metric(label="Total Weekly Sales Amount", value=f"${total_weekly_sales_amount}", delta="8%")
+        with col3:
+            st.metric(label="Total Week Losses", value=f"{total_weekly_losses} Units", delta="8%")
+        with col4:
+            st.metric(label="Total Week Losses Amount", value=f"${total_weekly_losses_amount}", delta="8%")
         style_metric_cards(border_left_color= 'green', box_shadow= False, background_color= "none")
 
     def show_weekly_sales_graph(self):
         col1, col2 = st.columns(2)
         with col1:
-            weekly_sales_graph = self.get_weekly_sales_graph(title = 'Sales Per Day')
-            st.altair_chart(weekly_sales_graph, use_container_width=True)
+            weekly_overall_graph = self.get_weekly_sales_loss_graph(title = 'Sales vs Loss Per Day')
+            st.altair_chart(weekly_overall_graph, use_container_width=True)
 
         with col2:
-            weekly_loss_graph = self.get_weekly_loss_graph(title = 'Loss Per Day')
-            st.altair_chart(weekly_loss_graph, use_container_width=True)
-            
+            c1, c2 = st.columns(2)
+            with c1:
+                weekly_sales_graph = self.get_weekly_sales_graph(title = 'Sales Per Day')
+                st.altair_chart(weekly_sales_graph, use_container_width=True)
+            with c2:
+                weekly_loss_graph = self.get_weekly_loss_graph(title = 'Loss Per Day')
+                st.altair_chart(weekly_loss_graph, use_container_width=True)
 
-    
 
-        
-    
+
     def show_history(self):
         st.header('Data History Log')
         history = self.get_history()

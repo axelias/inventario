@@ -138,12 +138,14 @@ class DataController:
         self.weekly_data.sort_values(by = 'Fecha', ascending = True)
     
     def get_total_weekly_sales(self):
-        total_weekly_sales = self.weekly_data['Sale Value'].sum()
-        return total_weekly_sales
+        total_weekly_sales_amount = self.weekly_data['Sale Value'].sum()
+        total_weekly_sales = self.weekly_data['Salida (Cantidad)'].sum()
+        return total_weekly_sales, total_weekly_sales_amount
 
     def get_total_weekly_losses(self):
-        total_weekly_losses = self.weekly_data['Loss Value'].sum()
-        return total_weekly_losses
+        total_weekly_losses_amount = self.weekly_data['Loss Value'].sum()
+        total_weekly_losses = self.weekly_data['Perdida'].sum()
+        return total_weekly_losses, total_weekly_losses_amount
     
     def get_weekly_graph_data(self, col):
         weekly_sales = self.weekly_data.groupby('Week Day')[col].sum()
@@ -165,6 +167,13 @@ class DataController:
     def get_weekly_loss_graph(self, title):
         weekly_losses, cols = self.get_weekly_graph_data('Loss Value')
         return self.prepare_chart(weekly_losses, cols, title, '#d92232')
+    
+    def get_weekly_sales_loss_graph(self, title):
+        weekly_sales, cols_sales = self.get_weekly_graph_data('Sale Value')
+        weekly_losses, cols_losses = self.get_weekly_graph_data('Loss Value')
+        print(weekly_losses)
+        return self.prepare_combined_chart(weekly_sales, cols_sales, weekly_losses, cols_losses, title, 'green', '#d92232')
+
 
 
     def prepare_chart(self, data, cols, title, color):
@@ -190,5 +199,61 @@ class DataController:
             # fontSize=16,
             # anchor='start',
             # font='Arial'
+        ).configure_axis(
+            grid=True
         )
         return combined_chart
+    
+
+    def prepare_combined_chart(self, data1, cols1, data2, cols2, title, color1, color2):
+        day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        chart1 = alt.Chart(data1).mark_bar(color=color1).encode(
+            x=alt.X(f'{cols1[0]}:O', sort = day_order),
+            y=alt.Y(f'{cols1[1]}:Q'),
+            tooltip=cols1
+        )
+
+        chart_text1 = alt.Chart(data1).mark_text(dy=-10, color='black').encode(
+            x=alt.X(f'{cols1[0]}:O', sort = day_order),
+            y=alt.Y(f'{cols1[1]}:Q'),
+            text=alt.Text(f'{cols1[1]}:Q')
+        )
+
+        chart21 = alt.Chart(data2).mark_line(color=color2).encode(
+            x=alt.X(f'{cols2[0]}:O', sort = day_order),
+            y=alt.Y(f'{cols2[1]}:Q'),
+            tooltip=cols2
+        )
+
+        chart22 = alt.Chart(data2).mark_point(color=color2, filled=True).encode(
+            x=alt.X(f'{cols2[0]}:O', sort = day_order),
+            y=alt.Y(f'{cols2[1]}:Q'),
+        )
+
+        chart_text2 = alt.Chart(data2).mark_text(dy=-10, color='black').encode(
+            x=alt.X(f'{cols2[0]}:O', sort = day_order, title = f"{cols2[0]}"),
+            y=alt.Y(f'{cols2[1]}:Q', title = "Sales vs Loss"),
+            text=alt.Text(f'{cols2[1]}:Q')
+        )
+    
+        combined_chart = alt.layer(
+            chart1,
+            chart_text1,
+            chart21,
+            chart22,
+            chart_text2
+        ).properties(
+            title=title
+        ).configure_title(
+            # fontSize=16,
+            # anchor='start',
+            # font='Arial'
+        ).configure_axis(
+            grid=True
+        )#.configure_axisX(
+         #   labelAngle=45  # Rotate x-axis labels to 45 degrees
+        #)
+
+        return combined_chart
+    
+    
