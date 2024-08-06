@@ -1,4 +1,3 @@
-from app_pages.Resumen import Resumen
 from app_pages.Inventario import Inventario
 from app_pages.Ventas import Ventas
 from app_pages.Logout import Logout

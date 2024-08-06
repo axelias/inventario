@@ -57,11 +57,14 @@ class Inventario(AuthController, DataController):
         if 'del_toast' not in st.session_state:
             st.session_state.del_toast = False
 
+        if 'reset' not in st.session_state:
+            st.session_state.reset = False
+
+        if 'part_empty_error' not in st.session_state:
+            st.session_state.part_empty_error = False
+
         if 'operation' not in st.session_state:
             st.session_state.operation = 0
-
-        # if 'part_number' not in st.session_state:
-        #     st.session_state.part_number = None
 
         if st.session_state.del_toast == True:
             st.toast("Data was deleted", icon = "🧺")
@@ -85,12 +88,20 @@ class Inventario(AuthController, DataController):
                     st.rerun()
 
 
-        def reset_form():
+        # def reset_form():
+        if st.session_state.reset:
             st.session_state.select_part_number = None
             st.session_state.del_part_number = None
             st.session_state.new_part_number = None
-
-        
+            st.session_state.entrada = 0
+            st.session_state.perdida = 0
+            st.session_state.salida = 0
+            st.session_state.fecha = pd.to_datetime("today")
+            st.session_state.description = ''
+            if st.session_state.operation == 2:
+                st.session_state.cost_per_unit = '$0.00'
+            st.session_state.reset = False
+            st.rerun()
         
         part_number = None
         is_disabled = True
@@ -108,9 +119,6 @@ class Inventario(AuthController, DataController):
                 st.session_state.operation = 2
             elif operation == options[2]:
                 st.session_state.operation = 3
-
-            # if st.session_state.operation in [1, 2, 3]:
-            #     st.session_state.part_number = None
         
         with col2:
             if st.session_state.operation == 0:
@@ -119,7 +127,7 @@ class Inventario(AuthController, DataController):
             if st.session_state.operation == 1 :
                 part_number = st.selectbox("No. Parte", 
                                            options= self.part_numbers, 
-                                        #    index = st.session_state.part_number, 
+                                           index = None,
                                            key = 'select_part_number',
                                            placeholder="Select")
 
@@ -130,14 +138,11 @@ class Inventario(AuthController, DataController):
             if st.session_state.operation == 3 :
                 part_number = st.selectbox("No. Parte", 
                                            options= self.part_numbers, 
-                                        #    index = st.session_state.part_number, 
+                                           index = None,
                                            key = 'del_part_number',
                                            placeholder="Select")
                 is_completely_disabled = True
                 
-            # if part_number:
-            #     st.session_state.part_number = self.part_numbers.index(part_number)
-
         
         col1,  _ = st.columns(2)
         with col1:
@@ -145,7 +150,10 @@ class Inventario(AuthController, DataController):
                 st.warning('Select operation')
             if st.session_state.operation == 2 and part_number and int(part_number) in self.part_numbers: 
                 st.error('Part Number Already Exists')  
-                is_disabled = True          
+                is_disabled = True      
+            if st.session_state.part_empty_error == True:
+                st.error('Part Number Cannot be Empty')  
+                st.session_state.part_empty_error = False
         
         part_details = self.filter_by_part_number(part_number)
         if st.session_state.operation == 3 :
@@ -160,26 +168,27 @@ class Inventario(AuthController, DataController):
                 date = st.date_input("Fecha", 
                                 value = part_details['Fecha'], 
                                 format ="DD-MM-YYYY",
-                                disabled = is_completely_disabled)
+                                disabled = is_completely_disabled,
+                                key = 'fecha')
             with c2: 
                 unidad = st.selectbox("Unidad", 
                                 options=["Uno", "Par"], #one or pair
                                 index=["Uno", "Par"].index(part_details["Unidad"]),
                                 disabled= is_disabled)
             description = st.text_area("Descripcion", value=str(part_details["Descripcion"]), 
-                                       height = 122, disabled = is_disabled)
+                                       height = 122, disabled = is_disabled, key='description')
         
         with col2:
-            incoming_num_pieces = st.number_input("Entrada (Cantidad)", step=1, format="%d", value=part_details["Entrada (Cantidad)"] if st.session_state.operation == 3 else 0, disabled = is_completely_disabled)
+            incoming_num_pieces = st.number_input("Entrada (Cantidad)", step=1, format="%d", value=part_details["Entrada (Cantidad)"] if st.session_state.operation == 3 else 0, disabled = is_completely_disabled, key='entrada')
             
-            outgoing_num_pieces = st.number_input("Salida (Cantidad)", step=1, format="%d", value=part_details["Salida (Cantidad)"] if st.session_state.operation == 3 else 0, disabled = is_completely_disabled)
+            outgoing_num_pieces = st.number_input("Salida (Cantidad)", step=1, format="%d", value=part_details["Salida (Cantidad)"] if st.session_state.operation == 3 else 0, disabled = is_completely_disabled, key='salida')
             
-            part_loss = st.number_input("Perdida", step=1, format="%d", value=part_details["Perdida"] if st.session_state.operation == 3 else 0, disabled = is_completely_disabled)
+            part_loss = st.number_input("Perdida", step=1, format="%d", value=part_details["Perdida"] if st.session_state.operation == 3 else 0, disabled = is_completely_disabled, key='perdida')
         
         with col3:
             cost_per_unit = st.text_input("Costo por Unidad", 
                                           value=f"${part_details['Costo por Unidad']:.2f}", 
-                                          disabled = is_disabled)
+                                          disabled = is_disabled, key='cost_per_unit')
             cost_per_unit = float(cost_per_unit.replace('$', '')) if cost_per_unit.strip() != '' else 0.00
 
             current_num_pieces = incoming_num_pieces - outgoing_num_pieces - part_loss
@@ -200,20 +209,20 @@ class Inventario(AuthController, DataController):
                         self.save_data([date, description, part_number, unidad, cost_per_unit, incoming_num_pieces, outgoing_num_pieces, part_loss, total_num_pieces, total_stock_value, 0, pd.to_datetime("today")])
                         st.toast("Your data has been saved successfully", icon = "✅")
                     else:
-                        st.error('Part Number Cannot be Empty')
+                        st.session_state.part_empty_error = True
+                        st.rerun()
 
                         
             elif st.session_state.operation == 3 :
                 if st.button(label='Borrar', use_container_width=True, type = "secondary"):
-                    show_dialog()
+                    if part_number:
+                        show_dialog()
+                    else:
+                        st.session_state.part_empty_error = True
+                        st.rerun()
 
         with cl3:
-            # if st.button(label='Reset', use_container_width=True, type = "primary"):
-            #     st.session_state.part_number = None
-            #     st.session_state.operation = 0
-            #     st.rerun()
-                # reset_form()
-            st.button(label='Reset', use_container_width=True, type = "primary", on_click=reset_form)
+            st.button(label='Reset', use_container_width=True, type = "primary", on_click=lambda: st.session_state.update({"reset": True}))
 
             
 

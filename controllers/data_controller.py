@@ -1,5 +1,10 @@
 import pandas as pd
 import numpy as np
+from datetime import datetime, timedelta
+import calendar
+import altair as alt
+
+
 
 class DataController:
     def __init__(self):
@@ -9,8 +14,10 @@ class DataController:
         self.current_inv = None
         self.part_numbers = None
         self.totals_summary = None
+        self.weekly_data = None
         self.load_data()
         self.get_data_totals_summary()
+        self.get_weekly_data()
 
     def load_data(self):
         #read data
@@ -30,8 +37,6 @@ class DataController:
 
         #extract part numbers
         self.part_numbers = self.data[self.data["Deleted"] != 1]["No. Parte"].dropna().unique().tolist()
-
-        #-----something here-----
 
     def save_data(self, row):
         # print(row)
@@ -119,9 +124,71 @@ class DataController:
         history = self.data.copy(deep = True)
         cols = ['Existencia Actual (Valor)', 'Costo por Unidad']
         history[cols] = history[cols].apply(lambda x: x.apply(lambda y: f'${y}'))
-        # if not pd.api.types.is_datetime64_any_dtype(history['Fecha']):
-        #     history['Fecha'] = pd.to_datetime(history['Fecha'], format='%d/%m/%Y', errors='coerce')
         history['Fecha'] = history['Fecha'].dt.strftime('%d/%m/%Y')
         return history
+    
+    def get_weekly_data(self):
+        now = datetime.now()
+        monday = now - timedelta(days=now.weekday())
+        sunday = monday + timedelta(days=6)
+        self.weekly_data = self.data[(self.data['Fecha'] >= monday) & (self.data['Fecha'] <= sunday)]
+        self.weekly_data['Week Day'] = self.weekly_data['Fecha'].dt.weekday
+        self.weekly_data['Sale Value'] = self.weekly_data['Costo por Unidad'] * self.weekly_data['Salida (Cantidad)']
+        self.weekly_data['Loss Value'] = self.weekly_data['Costo por Unidad'] * self.weekly_data['Perdida']
+        self.weekly_data.sort_values(by = 'Fecha', ascending = True)
+    
+    def get_total_weekly_sales(self):
+        total_weekly_sales = self.weekly_data['Sale Value'].sum()
+        return total_weekly_sales
+
+    def get_total_weekly_losses(self):
+        total_weekly_losses = self.weekly_data['Loss Value'].sum()
+        return total_weekly_losses
+    
+    def get_weekly_graph_data(self, col):
+        weekly_sales = self.weekly_data.groupby('Week Day')[col].sum()
+        days_of_week = range(7)
+        weekly_sales = weekly_sales.reindex(days_of_week, fill_value=0)
+        weekly_sales = weekly_sales.reset_index()
+        cols = ['Day of Week', col]
+        weekly_sales.columns = cols
+        weekly_sales.sort_values(by = 'Day of Week', inplace = True)
+        weekly_sales['Day of Week'] = weekly_sales['Day of Week'].map(lambda x: calendar.day_name[x])
+        weekly_sales.reset_index(drop=True, inplace=True)
+        return weekly_sales, cols
 
 
+    def get_weekly_sales_graph(self, title):
+        weekly_sales, cols = self.get_weekly_graph_data('Sale Value')
+        return self.prepare_chart(weekly_sales, cols, title, 'green')
+    
+    def get_weekly_loss_graph(self, title):
+        weekly_losses, cols = self.get_weekly_graph_data('Loss Value')
+        return self.prepare_chart(weekly_losses, cols, title, '#d92232')
+
+
+    def prepare_chart(self, data, cols, title, color):
+        day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        chart = alt.Chart(data).mark_bar(color=color).encode(
+            x=alt.X(f'{cols[0]}:O', title=f'{cols[0]}', sort = day_order),
+            y=alt.Y(f'{cols[1]}:Q', title=f'{cols[1]}'),
+            tooltip=cols
+        )
+
+        chart_text = alt.Chart(data).mark_text(dy=-10, color='black').encode(
+            x=alt.X(f'{cols[0]}:O', sort = day_order),
+            y=alt.Y(f'{cols[1]}:Q'),
+            text=alt.Text(f'{cols[1]}:Q')
+        )
+    
+        combined_chart = alt.layer(
+            chart,
+            chart_text
+        ).properties(
+            title=title
+        ).configure_title(
+            # fontSize=16,
+            # anchor='start',
+            # font='Arial'
+        )
+        return combined_chart
