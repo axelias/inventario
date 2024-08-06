@@ -4,8 +4,6 @@ from controllers.auth_controller import AuthController
 from controllers.data_controller import DataController
 from streamlit_extras.metric_cards import style_metric_cards
 from nav_bar.st_sub_navbar import SubNavbar
-from streamlit_modal import Modal
-
 
 
 class Inventario(AuthController, DataController):
