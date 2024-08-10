@@ -59,21 +59,6 @@ class Ventas(AuthController, DataController):
         with col2:
             weekly_amount_graph = self.get_weekly_amount_graph(title = 'Sales vs Loss Per Day (Valor)')
             st.altair_chart(weekly_amount_graph, use_container_width=True)
-            
-        # with col1:
-        #     weekly_amount_graph = self.get_weekly_amount_graph(title = 'Sales vs Loss Per Day (Valor)')
-        #     st.altair_chart(weekly_amount_graph, use_container_width=True)
-
-        # with col2:
-        #     weekly_value_graph = self.get_weekly_value_graph(title = 'Sales vs Loss Per Day (Units)')
-        #     st.altair_chart(weekly_value_graph, use_container_width=True)
-            # c1, c2 = st.columns(2)
-            # with c1:
-            #     weekly_sales_graph = self.get_weekly_sales_graph(title = 'Sales Per Day')
-            #     st.altair_chart(weekly_sales_graph, use_container_width=True)
-            # with c2:
-            #     weekly_loss_graph = self.get_weekly_loss_graph(title = 'Loss Per Day')
-            #     st.altair_chart(weekly_loss_graph, use_container_width=True)
 
     def show_weekly_summary(self):
         st.header('Weekly Data Inventory Totals')

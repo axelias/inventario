@@ -179,22 +179,16 @@ class DataController:
             amount_change_percent = (weekly_amount - last_week_amount) / last_week_amount * 100
         else:
             amount_change_percent = 0
-        # amount_change_percent = amount_change_percent.apply(lambda x: 0 if np.isinf(x) or np.isnan(x) else x)
 
         #find value change percentage
         if last_week_value != 0:
             value_change_percent = (weekly_value - last_week_value) / last_week_value * 100
         else:
             value_change_percent = 0
-        # value_change_percent = value_change_percent.apply(lambda x: 0 if np.isinf(x) or np.isnan(x) else x)
-
         return weekly_value, weekly_amount, round(amount_change_percent), round(value_change_percent)
 
     def get_total_weekly_losses(self):
         return self.get_total_weekly_data('Loss Value', 'Perdida')
-        # total_weekly_losses_amount = self.weekly_data['Loss Value'].sum()
-        # total_weekly_losses = self.weekly_data['Perdida'].sum()
-        # return total_weekly_losses, total_weekly_losses_amount
     
     def get_weekly_graph_data(self, col):
         weekly_sales = self.weekly_data.groupby('Week Day')[col].sum()
@@ -209,13 +203,13 @@ class DataController:
         return weekly_sales, cols
 
 
-    def get_weekly_sales_graph(self, title):
-        weekly_sales, cols = self.get_weekly_graph_data('Sale Value')
-        return self.prepare_chart(weekly_sales, cols, title, 'green')
+    # def get_weekly_sales_graph(self, title):
+    #     weekly_sales, cols = self.get_weekly_graph_data('Sale Value')
+    #     return self.prepare_chart(weekly_sales, cols, title, 'green')
     
-    def get_weekly_loss_graph(self, title):
-        weekly_losses, cols = self.get_weekly_graph_data('Loss Value')
-        return self.prepare_chart(weekly_losses, cols, title, '#d92232')
+    # def get_weekly_loss_graph(self, title):
+    #     weekly_losses, cols = self.get_weekly_graph_data('Loss Value')
+    #     return self.prepare_chart(weekly_losses, cols, title, '#d92232')
     
     def get_weekly_amount_graph(self, title):
         weekly_sales, cols_sales = self.get_weekly_graph_data('Sale Value')
