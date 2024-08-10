@@ -38,13 +38,13 @@ class Inventario(AuthController, DataController):
         col1, col2, col3 = st.columns(3)
         with col1:
             total_initial_inv = self.get_initial_investment()
-            st.metric(label="Inventario Inicial", value=f"${total_initial_inv}", delta="8%")
+            st.metric(label="Inventario Inicial", value=f"${total_initial_inv}")
         with col2:
             total_existing_inv = self.get_existing_investment()
-            st.metric(label="Inventario Existente", value=f"${total_existing_inv}", delta="8%")
+            st.metric(label="Inventario Existente", value=f"${total_existing_inv}")
         with col3:
             total_sold_value = self.get_sold_value()
-            st.metric(label="Inventario Existente", value=f"${total_sold_value}", delta="8%")
+            st.metric(label="Inventario Existente", value=f"${total_sold_value}")
         style_metric_cards(border_left_color= 'green', box_shadow= False, background_color= "none")
 
     def show_current_totals(self):

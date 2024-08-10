@@ -3,6 +3,7 @@ import numpy as np
 from datetime import datetime, timedelta
 import calendar
 import altair as alt
+import math
 
 
 
@@ -15,9 +16,12 @@ class DataController:
         self.part_numbers = None
         self.totals_summary = None
         self.weekly_data = None
+        self.last_week_data = None
+        self.weekly_summary = None
         self.load_data()
         self.get_data_totals_summary()
-        self.get_weekly_data()
+        self.set_weekly_data()
+        self.get_weekly_summary()
 
     def load_data(self):
         #read data
@@ -39,10 +43,8 @@ class DataController:
         self.part_numbers = self.data[self.data["Deleted"] != 1]["No. Parte"].dropna().unique().tolist()
 
     def save_data(self, row):
-        # print(row)
         row = pd.DataFrame([row], columns = self.data.columns)
         self.data = pd.concat([row, self.data])
-        # print(self.data)
         self.save_data_to_excel()
         
     def save_data_to_excel(self):
@@ -127,25 +129,72 @@ class DataController:
         history['Fecha'] = history['Fecha'].dt.strftime('%d/%m/%Y')
         return history
     
-    def get_weekly_data(self):
+    def set_weekly_data(self):
+        # Get current week data
         now = datetime.now()
         monday = now - timedelta(days=now.weekday())
         sunday = monday + timedelta(days=6)
-        self.weekly_data = self.data[(self.data['Fecha'] >= monday) & (self.data['Fecha'] <= sunday)]
-        self.weekly_data['Week Day'] = self.weekly_data['Fecha'].dt.weekday
-        self.weekly_data['Sale Value'] = self.weekly_data['Costo por Unidad'] * self.weekly_data['Salida (Cantidad)']
-        self.weekly_data['Loss Value'] = self.weekly_data['Costo por Unidad'] * self.weekly_data['Perdida']
-        self.weekly_data.sort_values(by = 'Fecha', ascending = True)
+
+        # Get previous week data
+        last_monday = monday - timedelta(days=7)
+        last_sunday = sunday - timedelta(days=7)
+        self.weekly_data = self.get_weekly_data(monday, sunday)
+        self.last_week_data = self.get_weekly_data(last_monday, last_sunday)
+        # print(self.weekly_data[['Fecha', 'Salida (Cantidad)', 'Perdida', 'Sale Value', 'Loss Value']])
+        # print(self.last_week_data[['Fecha', 'Salida (Cantidad)', 'Perdida', 'Sale Value', 'Loss Value']])
+
+    def get_weekly_data(self, monday, sunday):
+        week_data = self.data[(self.data['Fecha'] >= monday) & (self.data['Fecha'] <= sunday) & (self.data["Deleted"] != 1)].copy()
+
+        week_data.loc[:, 'Week Day'] = week_data['Fecha'].dt.weekday
+        week_data.loc[:, 'Sale Value'] = week_data['Costo por Unidad'] * week_data['Salida (Cantidad)']
+        week_data.loc[:, 'Loss Value'] = week_data['Costo por Unidad'] * week_data['Perdida']
+        week_data.sort_values(by = 'Fecha', ascending = True)
+        week_data.loc[:, 'Fecha'] = week_data['Fecha'].dt.strftime('%d/%m/%Y')
+
+        return week_data
+
+
+    def get_weekly_summary(self):
+        self.weekly_summary = self.weekly_data.groupby(['Fecha', 'Descripcion', 'No. Parte', 'Unidad', 'Costo por Unidad'])[['Salida (Cantidad)', 'Perdida', 'Sale Value', 'Loss Value']].sum()
+        self.weekly_summary.reset_index(inplace = True)
+        cols = ['Sale Value', 'Loss Value', 'Costo por Unidad']
+        self.weekly_summary[cols] = self.weekly_summary[cols].apply(lambda x: x.apply(lambda y: f'${y}'))
+
     
     def get_total_weekly_sales(self):
-        total_weekly_sales_amount = self.weekly_data['Sale Value'].sum()
-        total_weekly_sales = self.weekly_data['Salida (Cantidad)'].sum()
-        return total_weekly_sales, total_weekly_sales_amount
+        return self.get_total_weekly_data('Sale Value', 'Salida (Cantidad)')
+
+    def get_total_weekly_data(self, amount_col, num_col):
+        #find this week total amount and value
+        weekly_amount = self.weekly_data[amount_col].sum()
+        weekly_value = self.weekly_data[num_col].sum()
+
+        #find last week total amount and value
+        last_week_amount = self.last_week_data[amount_col].sum()
+        last_week_value = self.last_week_data[num_col].sum()
+
+        #find amount change percentage
+        if last_week_amount != 0:
+            amount_change_percent = (weekly_amount - last_week_amount) / last_week_amount * 100
+        else:
+            amount_change_percent = 0
+        # amount_change_percent = amount_change_percent.apply(lambda x: 0 if np.isinf(x) or np.isnan(x) else x)
+
+        #find value change percentage
+        if last_week_value != 0:
+            value_change_percent = (weekly_value - last_week_value) / last_week_value * 100
+        else:
+            value_change_percent = 0
+        # value_change_percent = value_change_percent.apply(lambda x: 0 if np.isinf(x) or np.isnan(x) else x)
+
+        return weekly_value, weekly_amount, round(amount_change_percent), round(value_change_percent)
 
     def get_total_weekly_losses(self):
-        total_weekly_losses_amount = self.weekly_data['Loss Value'].sum()
-        total_weekly_losses = self.weekly_data['Perdida'].sum()
-        return total_weekly_losses, total_weekly_losses_amount
+        return self.get_total_weekly_data('Loss Value', 'Perdida')
+        # total_weekly_losses_amount = self.weekly_data['Loss Value'].sum()
+        # total_weekly_losses = self.weekly_data['Perdida'].sum()
+        # return total_weekly_losses, total_weekly_losses_amount
     
     def get_weekly_graph_data(self, col):
         weekly_sales = self.weekly_data.groupby('Week Day')[col].sum()
@@ -168,10 +217,14 @@ class DataController:
         weekly_losses, cols = self.get_weekly_graph_data('Loss Value')
         return self.prepare_chart(weekly_losses, cols, title, '#d92232')
     
-    def get_weekly_sales_loss_graph(self, title):
+    def get_weekly_amount_graph(self, title):
         weekly_sales, cols_sales = self.get_weekly_graph_data('Sale Value')
         weekly_losses, cols_losses = self.get_weekly_graph_data('Loss Value')
-        print(weekly_losses)
+        return self.prepare_combined_chart(weekly_sales, cols_sales, weekly_losses, cols_losses, title, 'green', '#d92232')
+    
+    def get_weekly_value_graph(self, title):
+        weekly_sales, cols_sales = self.get_weekly_graph_data('Salida (Cantidad)')
+        weekly_losses, cols_losses = self.get_weekly_graph_data('Perdida')
         return self.prepare_combined_chart(weekly_sales, cols_sales, weekly_losses, cols_losses, title, 'green', '#d92232')
 
 
@@ -213,9 +266,20 @@ class DataController:
             tooltip=cols1
         )
 
-        chart_text1 = alt.Chart(data1).mark_text(dy=-10, color='black').encode(
-            x=alt.X(f'{cols1[0]}:O', sort = day_order),
-            y=alt.Y(f'{cols1[1]}:Q'),
+        chart_text1 = alt.Chart(data1).mark_text(dy=-10, color='black', size = 14).encode(
+            x=alt.X(f'{cols1[0]}:O', 
+                    sort = day_order,
+                    axis=alt.Axis(
+                    labelColor='black',
+                    labelFontSize=14,
+                    titleFontSize=16,
+                    titleFontWeight='bold')),
+            y=alt.Y(f'{cols1[1]}:Q', 
+                    axis=alt.Axis(
+                    labelColor='black',
+                    labelFontSize=14,
+                    titleFontSize=16,
+                    titleFontWeight='bold')),
             text=alt.Text(f'{cols1[1]}:Q')
         )
 
@@ -230,9 +294,22 @@ class DataController:
             y=alt.Y(f'{cols2[1]}:Q'),
         )
 
-        chart_text2 = alt.Chart(data2).mark_text(dy=-10, color='black').encode(
-            x=alt.X(f'{cols2[0]}:O', sort = day_order, title = f"{cols2[0]}"),
-            y=alt.Y(f'{cols2[1]}:Q', title = "Sales vs Loss"),
+        chart_text2 = alt.Chart(data2).mark_text(dy=-10, color='black', size = 14).encode(
+            x=alt.X(f'{cols2[0]}:O', 
+                    sort = day_order, 
+                    title = f"{cols2[0]}",
+                    axis=alt.Axis(
+                    labelColor='black',
+                    labelFontSize=14,
+                    titleFontSize=16,
+                    titleFontWeight='bold')),
+            y=alt.Y(f'{cols2[1]}:Q', 
+                    title = "Sales vs Loss",
+                    axis=alt.Axis(
+                    labelColor='black',
+                    labelFontSize=14,
+                    titleFontSize=16,
+                    titleFontWeight='bold')),
             text=alt.Text(f'{cols2[1]}:Q')
         )
     
