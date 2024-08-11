@@ -1,19 +1,18 @@
-import streamlit as st
-from auth.st_auth_user import UserAuthenticator
-from nav_bar.st_custom_navbar import Navbar
+# auth/st_auth_user.py
 
-st.set_page_config(initial_sidebar_state="collapsed", layout="wide")
+class UserAuthenticator:
+    def __init__(self):
+        self.username = "admin"
+        self.password = "password123"
+        self.authentication_status = None
+        self.authenticate()
 
+    def authenticate(self):
+        input_username = st.text_input('Username')
+        input_password = st.text_input('Password', type='password')
 
-_, col1, _ = st.columns([1, 2, 1])
-with col1:
-    auth = UserAuthenticator()
-
-    if auth.authentication_status == False:
-        st.error('Nombre de usuario o contrasena incorrectos')
-    elif auth.authentication_status == None:
-        st.warning('Por favor entre nombre de usuario y contrasena')
-
-if auth.authentication_status:
-    navbar = Navbar(auth)
-    navbar.show()
+        if st.button('Login'):
+            if input_username == self.username and input_password == self.password:
+                self.authentication_status = True
+            else:
+                self.authentication_status = False
