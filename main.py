@@ -10,9 +10,9 @@ with col1:
     auth = UserAuthenticator()
 
     if auth.authentication_status == False:
-        st.error('Username or password is incorrect')
+        st.error('Nombre de usuario o contrasena incorrectos')
     elif auth.authentication_status == None:
-        st.warning('Please enter your username and password')
+        st.warning('Por favor entre nombre de usuario y contrasena')
 
 if auth.authentication_status:
     navbar = Navbar(auth)
