@@ -1,8 +1,8 @@
 credentials:
   usernames: 
     admin:
-      email: inv247
-      name: inv247
+      email: 
+      name: 
       password: inv247 # To be replaced with hashed password
 
 cookie:
