@@ -15,7 +15,7 @@ class Ventas(AuthController, DataController):
         if "selected_index" not in st.session_state:
             st.session_state.selected_option = 0
 
-        options = ["Dashboard", "Resumen", "History"] 
+        options = ["Panel", "Resumen", "Historial"] 
         icons = icons=['receipt-cutoff', 'view-list', 'book']
         
         sub_navbar = SubNavbar(options, icons, st.session_state.selected_option)
@@ -40,31 +40,31 @@ class Ventas(AuthController, DataController):
 
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.metric(label="Total Weekly Sales", value=f"{total_weekly_sales} Units", delta=f"{sales_value_change_percent}%")
+            st.metric(label="Total de Ventas Semanales", value=f"{total_weekly_sales} Units", delta=f"{sales_value_change_percent}%")
         with col2:
-            st.metric(label="Total Weekly Sales (Valor)", value=f"${total_weekly_sales_amount}", delta=f"{sales_amount_change_percent}%")
+            st.metric(label="Total de Ventas Semanales (Valor)", value=f"${total_weekly_sales_amount}", delta=f"{sales_amount_change_percent}%")
         with col3:
-            st.metric(label="Total Week Losses", value=f"{total_weekly_losses} Units", delta=f"{loss_value_change_percent}%")
+            st.metric(label="Total de Perdidas Semanales", value=f"{total_weekly_losses} Units", delta=f"{loss_value_change_percent}%")
         with col4:
-            st.metric(label="Total Week Losses (Valor)", value=f"${total_weekly_losses_amount}", delta=f"{loss_amount_change_percent}%")
+            st.metric(label="Total de Perdidas Semanales (Valor)", value=f"${total_weekly_losses_amount}", delta=f"{loss_amount_change_percent}%")
 
         style_metric_cards(border_left_color= 'green', box_shadow= False, background_color= "none")
 
     def show_weekly_sales_graph(self):
         col1, col2 = st.columns(2)
         with col1:
-            weekly_value_graph = self.get_weekly_value_graph(title = 'Sales vs Loss Per Day (Units)')
+            weekly_value_graph = self.get_weekly_value_graph(title = 'Ventas vs Perdidas Por Dia (Unidades)')
             st.altair_chart(weekly_value_graph, use_container_width=True)
 
         with col2:
-            weekly_amount_graph = self.get_weekly_amount_graph(title = 'Sales vs Loss Per Day (Valor)')
+            weekly_amount_graph = self.get_weekly_amount_graph(title = 'Ventas vs Perdias por Dia (Valor)')
             st.altair_chart(weekly_amount_graph, use_container_width=True)
 
     def show_weekly_summary(self):
-        st.header('Weekly Data Inventory Totals')
+        st.header('Datos de Inventario Semanal')
         st.data_editor(self.weekly_summary, disabled = True, use_container_width=True)
 
     def show_history(self):
-        st.header('Data History Log')
+        st.header('Registro de Cambios')
         history = self.get_history()
         st.data_editor(history, disabled = True, use_container_width=True)
