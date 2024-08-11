@@ -30,8 +30,7 @@ class UserAuthenticator(object):
             credentials,
             cookie_config['name'],
             cookie_config['key'],
-            cookie_config['expiry_days'],
-            preauthorized=None
+            cookie_config['expiry_days']
         )
         
         self.name, self.authentication_status, self.username = self.authenticator.login(clear_on_submit=True)
