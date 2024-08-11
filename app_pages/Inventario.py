@@ -65,17 +65,17 @@ class Inventario(AuthController, DataController):
             st.session_state.operation = 0
 
         if st.session_state.del_toast == True:
-            st.toast("Data was deleted", icon = "🧺")
+            st.toast("Datos borrados", icon = "🧺")
             st.session_state.del_toast = False
         
         @st.experimental_dialog('Deletion Confirmation')
         def show_dialog():
-            st.write("Do you want to delete this part?")
+            st.write("Desea borrar este articulo?")
             st.text_input("No. Parte", value = part_number, disabled = True)          
             st.text_input("Descripcion", value = description, disabled = True)
             col1, col2 = st.columns(2)
             with col1: 
-                if st.button('Yes', use_container_width=True, type = "secondary"):
+                if st.button('Si', use_container_width=True, type = "secondary"):
                     self.remove_data(part_number)
                     st.session_state.del_toast = True
                     st.session_state.del_part_number = None
@@ -107,7 +107,7 @@ class Inventario(AuthController, DataController):
         
         col1, col2, col3 = st.columns([1, 1, 2])
         with col1:
-            options = ["Seleccionar existente", "Ingresar nuevo", "Delete existente"]
+            options = ["Seleccionar existente", "Ingresar nuevo", "Borrar existente"]
             operation = st.selectbox("Seleccionar Operation",
                                         options = options, index = None)
 
@@ -130,7 +130,7 @@ class Inventario(AuthController, DataController):
                                            placeholder="Select")
 
             if st.session_state.operation == 2:
-                part_number = st.text_input("No. Parte", placeholder= "Enter New Part Number", key = 'new_part_number')
+                part_number = st.text_input("No. Parte", placeholder= "Entre nuevo numero de parte", key = 'new_part_number')
                 is_disabled = False
 
             if st.session_state.operation == 3 :
@@ -138,7 +138,7 @@ class Inventario(AuthController, DataController):
                                            options= self.part_numbers, 
                                            index = None,
                                            key = 'del_part_number',
-                                           placeholder="Select")
+                                           placeholder="Seleccionar")
                 is_completely_disabled = True
                 
         
