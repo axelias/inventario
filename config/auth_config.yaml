@@ -1,13 +1,10 @@
 credentials:
   usernames:
     admin:
-      email: hania502@hotmail.com
+      email: inv247
       name: inv247
       password: inv247 # To be replaced with hashed password
-    # rbriggs:
-    #   email: rbriggs@gmail.com
-    #   name: Rebecca Briggs
-    #   password: def # To be replaced with hashed password
+
 cookie:
   expiry_days: 30
   key: admin_signature_key # Must be string
