@@ -6,5 +6,5 @@ pages = {
     # "Resumen" : Resumen, # Page Name: Respective python class
     "Inventario": Inventario,
     "Ventas": Ventas,
-    "Logout": Logout
+    "Salir": Logout
 }
