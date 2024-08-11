@@ -108,7 +108,7 @@ class Inventario(AuthController, DataController):
         col1, col2, col3 = st.columns([1, 1, 2])
         with col1:
             options = ["Seleccionar existente", "Ingresar nuevo", "Borrar existente"]
-            operation = st.selectbox("Seleccionar Operation",
+            operation = st.selectbox("Seleccionar Operacion",
                                         options = options, index = None)
 
             if operation == options[0]:
@@ -120,7 +120,7 @@ class Inventario(AuthController, DataController):
         
         with col2:
             if st.session_state.operation == 0:
-                st.selectbox("No. Parte", options= self.part_numbers, index=None, placeholder="Select", disabled=True)
+                st.selectbox("No. Parte", options= self.part_numbers, index=None, placeholder="Seleccionar", disabled=True)
 
             if st.session_state.operation == 1 :
                 part_number = st.selectbox("No. Parte", 
