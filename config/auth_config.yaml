@@ -2,13 +2,13 @@ credentials:
   usernames: 
     admin:
       email: 
-      name: 
-      password: inv247 # To be replaced with hashed password
+      name: inv247  # Replace with actual name
+      password: inv247  # Replace with the hashed password from Step 1
 
 cookie:
   expiry_days: 30
-  key: admin_signature_key # Must be string
+  key: admin_signature_key  # This is fine as a string
   name: admin_cookie
+
 preauthorized:
   emails:
-  - hania502@hotmail.com
