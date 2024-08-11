@@ -24,5 +24,5 @@ class UserAuthenticator(object):
         )
         self.name, self.authentication_status, self.username = self.authenticator.login(clear_on_submit= True)
 
-    def logout(self):
-        self.authenticator.logout('Logout', 'unrendered')
+    def salir(self):
+        self.authenticator.salir('Salir', 'unrendered')
