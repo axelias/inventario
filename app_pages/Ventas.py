@@ -57,7 +57,7 @@ class Ventas(AuthController, DataController):
             st.altair_chart(weekly_value_graph, use_container_width=True)
 
         with col2:
-            weekly_amount_graph = self.get_weekly_amount_graph(title = 'Ventas vs Perdias por Dia (Valor)')
+            weekly_amount_graph = self.get_weekly_amount_graph(title = 'Ventas vs Perdidas por Dia (Valor)')
             st.altair_chart(weekly_amount_graph, use_container_width=True)
 
     def show_weekly_summary(self):
