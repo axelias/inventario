@@ -15,7 +15,7 @@ class Inventario(AuthController, DataController):
         if "selected_option" not in st.session_state:
             st.session_state.selected_option = 0
 
-        options = ["Dashboard","Resumen", "Edit Inventory"]
+        options = ["Panel","Resumen", "Editar Inventario"]
         icons = icons=['boxes','list-task', 'pencil']
         
         sub_navbar = SubNavbar(options, icons, st.session_state.selected_option)
