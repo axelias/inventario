@@ -44,11 +44,11 @@ class Inventario(AuthController, DataController):
             st.metric(label="Inventario Existente", value=f"${total_existing_inv}")
         with col3:
             total_sold_value = self.get_sold_value()
-            st.metric(label="Inventario Existente", value=f"${total_sold_value}")
+            st.metric(label="Inventario Vendido", value=f"${total_sold_value}")
         style_metric_cards(border_left_color= 'green', box_shadow= False, background_color= "none")
 
     def show_current_totals(self):
-        st.header('Data Inventory Totals')
+        st.header('Totales en Inventario')
         st.data_editor(self.totals_summary, disabled = True, use_container_width=True)
 
     def edit_inventory_item(self):
@@ -220,7 +220,7 @@ class Inventario(AuthController, DataController):
                         st.rerun()
 
         with cl3:
-            st.button(label='Reset', use_container_width=True, type = "primary", on_click=lambda: st.session_state.update({"reset": True}))
+            st.button(label='Resetear', use_container_width=True, type = "primary", on_click=lambda: st.session_state.update({"reset": True}))
 
             
 
