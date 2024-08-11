@@ -14,7 +14,7 @@ class UserAuthenticator(object):
             "usernames": {
                 "admin": {
                     "name": "inv247",
-                    "password": stauth.Hasher(['inv247']).generate()[0]  # Replace 'password123' with your password
+                    "password": "inv247"
                 }
             }
         }
