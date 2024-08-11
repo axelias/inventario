@@ -194,9 +194,9 @@ class Inventario(AuthController, DataController):
             current_stock_value = current_num_pieces * cost_per_unit
             total_stock_value = total_num_pieces * cost_per_unit
 
-            st.number_input("Total Pieces", value=current_num_pieces, key="existencia_actual", disabled=True)
+            st.number_input("Total Articulos", value=current_num_pieces, key="existencia_actual", disabled=True)
             
-            st.metric(label="Total Valor", value=f"${current_stock_value:.2f}")
+            st.metric(label="Valor Total", value=f"${current_stock_value:.2f}")
 
   
         cl1, cl2, cl3, cl4 = st.columns(4)
