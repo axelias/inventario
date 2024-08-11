@@ -2,8 +2,8 @@
 
 class UserAuthenticator:
     def __init__(self):
-        self.username = "admin"
-        self.password = "password123"
+        self.username = "inv247"
+        self.password = "inv247"
         self.authentication_status = None
         self.authenticate()
 
