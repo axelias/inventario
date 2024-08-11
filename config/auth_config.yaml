@@ -3,7 +3,7 @@ credentials:
     admin:
       email: hania502@hotmail.com
       name: Hania Arif
-      password: $inv247 # To be replaced with hashed password
+      password: inv247 # To be replaced with hashed password
     # rbriggs:
     #   email: rbriggs@gmail.com
     #   name: Rebecca Briggs
