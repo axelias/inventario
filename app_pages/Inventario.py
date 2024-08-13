@@ -127,7 +127,7 @@ class Inventario(AuthController, DataController):
                                            options= self.part_numbers, 
                                            index = None,
                                            key = 'select_part_number',
-                                           placeholder="Select")
+                                           placeholder="Seleccionar")
 
             if st.session_state.operation == 2:
                 part_number = st.text_input("No. Parte", placeholder= "Entre nuevo numero de parte", key = 'new_part_number')
@@ -145,7 +145,7 @@ class Inventario(AuthController, DataController):
         col1,  _ = st.columns(2)
         with col1:
             if st.session_state.operation == 0:
-                st.warning('Select operation')
+                st.warning('Seleccionar Operacion')
             if st.session_state.operation == 2 and part_number and int(part_number) in self.part_numbers: 
                 st.error('Part Number Already Exists')  
                 is_disabled = True      

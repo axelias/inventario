@@ -1,14 +1,17 @@
 credentials:
-  usernames: 
-    admin:
-      email: 
-      name: inv247  # Replace with actual name
-      password: inv247  # Replace with the hashed password from Step 1
-
+  usernames:
+    inv247:
+      email: alexiseliasjw@gmail.com
+      name: Alexis Elias
+      password: $2b$12$Xu2JjAyrmSCvOe.z8R4g4.IU6q8fAOj6AnzDrrYMeq/WXYxjKlXqm # To be replaced with hashed password
+    # rbriggs:
+    #   email: rbriggs@gmail.com
+    #   name: Rebecca Briggs
+    #   password: def # To be replaced with hashed password
 cookie:
   expiry_days: 30
-  key: admin_signature_key  # This is fine as a string
+  key: admin_signature_key # Must be string
   name: admin_cookie
-
 preauthorized:
   emails:
+  - alexiseliasjw@gmail.com

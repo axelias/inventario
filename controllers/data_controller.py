@@ -298,7 +298,7 @@ class DataController:
                     titleFontSize=16,
                     titleFontWeight='bold')),
             y=alt.Y(f'{cols2[1]}:Q', 
-                    title = "Sales vs Loss",
+                    title = "Ventas vs Perdidas",
                     axis=alt.Axis(
                     labelColor='black',
                     labelFontSize=14,
