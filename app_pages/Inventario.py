@@ -68,7 +68,7 @@ class Inventario(AuthController, DataController):
             st.toast("Datos borrados", icon = "🧺")
             st.session_state.del_toast = False
         
-        @st.experimental_dialog('Deletion Confirmation')
+        @st.experimental_dialog('Confirmación de Eliminación')
         def show_dialog():
             st.write("Desea borrar este articulo?")
             st.text_input("No. Parte", value = part_number, disabled = True)          
@@ -147,10 +147,10 @@ class Inventario(AuthController, DataController):
             if st.session_state.operation == 0:
                 st.warning('Seleccionar Operacion')
             if st.session_state.operation == 2 and part_number and int(part_number) in self.part_numbers: 
-                st.error('Part Number Already Exists')  
+                st.error('El Número de Parte Ya Existe')  
                 is_disabled = True      
             if st.session_state.part_empty_error == True:
-                st.error('Part Number Cannot be Empty')  
+                st.error('El Número de Parte No Puede Estar Vacío')  
                 st.session_state.part_empty_error = False
         
         part_details = self.filter_by_part_number(part_number)
@@ -205,7 +205,7 @@ class Inventario(AuthController, DataController):
                 if st.button(label='Guardar', use_container_width=True, type= "primary"):
                     if part_number:
                         self.save_data([date, description, part_number, unidad, cost_per_unit, incoming_num_pieces, outgoing_num_pieces, part_loss, total_num_pieces, total_stock_value, 0, pd.to_datetime("today")])
-                        st.toast("Your data has been saved successfully", icon = "✅")
+                        st.toast("Sus datos se han guardado correctamente", icon = "✅")
                     else:
                         st.session_state.part_empty_error = True
                         st.rerun()

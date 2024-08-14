@@ -195,21 +195,19 @@ class DataController:
         days_of_week = range(7)
         weekly_sales = weekly_sales.reindex(days_of_week, fill_value=0)
         weekly_sales = weekly_sales.reset_index()
-        cols = ['Day of Week', col]
+        cols = ['Día de la Semana', col] # day of week
         weekly_sales.columns = cols
-        weekly_sales.sort_values(by = 'Day of Week', inplace = True)
-        weekly_sales['Day of Week'] = weekly_sales['Day of Week'].map(lambda x: calendar.day_name[x])
+        weekly_sales.sort_values(by = 'Día de la Semana', inplace = True)
+        weekly_sales['Día de la Semana'] = weekly_sales['Día de la Semana'].map(lambda x: calendar.day_name[x])
+        weekly_sales['Día de la Semana'] = weekly_sales['Día de la Semana'].map({'Monday':'Lunes', 
+                                                                                 'Tuesday':'Martes', 
+                                                                                 'Wednesday':'Miércoles',
+                                                                                 'Thursday':'Jueves',
+                                                                                 'Friday':'Viernes', 
+                                                                                 'Saturday':'Sábado', 
+                                                                                 'Sunday':'Domingo'})
         weekly_sales.reset_index(drop=True, inplace=True)
         return weekly_sales, cols
-
-
-    # def get_weekly_sales_graph(self, title):
-    #     weekly_sales, cols = self.get_weekly_graph_data('Sale Value')
-    #     return self.prepare_chart(weekly_sales, cols, title, 'green')
-    
-    # def get_weekly_loss_graph(self, title):
-    #     weekly_losses, cols = self.get_weekly_graph_data('Loss Value')
-    #     return self.prepare_chart(weekly_losses, cols, title, '#d92232')
     
     def get_weekly_amount_graph(self, title):
         weekly_sales, cols_sales = self.get_weekly_graph_data('Sale Value')
@@ -221,39 +219,8 @@ class DataController:
         weekly_losses, cols_losses = self.get_weekly_graph_data('Perdida')
         return self.prepare_combined_chart(weekly_sales, cols_sales, weekly_losses, cols_losses, title, 'green', '#d92232')
 
-
-
-    def prepare_chart(self, data, cols, title, color):
-        day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-        chart = alt.Chart(data).mark_bar(color=color).encode(
-            x=alt.X(f'{cols[0]}:O', title=f'{cols[0]}', sort = day_order),
-            y=alt.Y(f'{cols[1]}:Q', title=f'{cols[1]}'),
-            tooltip=cols
-        )
-
-        chart_text = alt.Chart(data).mark_text(dy=-10, color='black').encode(
-            x=alt.X(f'{cols[0]}:O', sort = day_order),
-            y=alt.Y(f'{cols[1]}:Q'),
-            text=alt.Text(f'{cols[1]}:Q')
-        )
-    
-        combined_chart = alt.layer(
-            chart,
-            chart_text
-        ).properties(
-            title=title
-        ).configure_title(
-            # fontSize=16,
-            # anchor='start',
-            # font='Arial'
-        ).configure_axis(
-            grid=True
-        )
-        return combined_chart
-    
-
     def prepare_combined_chart(self, data1, cols1, data2, cols2, title, color1, color2):
-        day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        day_order = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] #Monday to Sunday
         chart1 = alt.Chart(data1).mark_bar(color=color1).encode(
             x=alt.X(f'{cols1[0]}:O', sort = day_order),
             y=alt.Y(f'{cols1[1]}:Q'),
