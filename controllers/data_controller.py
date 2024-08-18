@@ -97,17 +97,17 @@ class DataController:
 
         
     def get_data_totals_summary(self):
-        current_data = self.data[(self.data["Deleted"] != 1)]
+        current_data = self.data[(self.data["Borrado"] != 1)]
         totals = current_data.groupby('No. Parte')[['Entrada (Cantidad)', 'Salida (Cantidad)', 'Perdida']].sum()
         totals.reset_index(inplace = True)
 
-        finals = current_data.sort_values(by=['No. Parte', 'Created'], ascending=[True, False])
+        finals = current_data.sort_values(by=['No. Parte', 'Creado'], ascending=[True, False])
         finals = finals.drop_duplicates(subset='No. Parte', keep='first')
         finals = finals[['No. Parte', 'Descripcion', 'Unidad', 'Costo por Unidad', 'Existencia Actual', 'Existencia Actual (Valor)']]
         summary = pd.merge(finals, totals,  on='No. Parte', how='left')
-        summary['Total Investment'] = summary['Costo por Unidad'] * summary['Entrada (Cantidad)']
-        summary = summary[['No. Parte', 'Descripcion', 'Unidad', 'Costo por Unidad', 'Entrada (Cantidad)', 'Salida (Cantidad)', 'Perdida', 'Existencia Actual', 'Total Investment', 'Existencia Actual (Valor)']]
-        cols = ['Total Investment', 'Existencia Actual (Valor)', 'Costo por Unidad']
+        summary['Inversion Total'] = summary['Costo por Unidad'] * summary['Entrada (Cantidad)']
+        summary = summary[['No. Parte', 'Descripcion', 'Unidad', 'Costo por Unidad', 'Entrada (Cantidad)', 'Salida (Cantidad)', 'Perdida', 'Existencia Actual', 'Inversion Total', 'Existencia Actual (Valor)']]
+        cols = ['Inversion Total', 'Existencia Actual (Valor)', 'Costo por Unidad']
         summary[cols] = summary[cols].apply(lambda x: x.apply(lambda y: f'${y}'))
         self.totals_summary = summary
 
