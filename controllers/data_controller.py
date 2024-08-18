@@ -37,7 +37,7 @@ class DataController:
         #clean data and convert data types
         self.data["Existencia Actual (Valor)"] = self.data["Existencia Actual (Valor)"].replace(r'[\$,]', '', regex=True).astype(float)
 
-        self.data.sort_values(by = 'Created', ascending = False, inplace = True)
+        self.data.sort_values(by = 'Creado', ascending = False, inplace = True)
 
         #extract part numbers
         self.part_numbers = self.data[self.data["Deleted"] != 1]["No. Parte"].dropna().unique().tolist()
