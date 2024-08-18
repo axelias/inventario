@@ -112,7 +112,7 @@ class DataController:
         self.totals_summary = summary
 
     def get_initial_investment(self):
-        total_initial_inv = self.totals_summary['Total Investment'].str.replace('$', '').astype(float).sum()
+        total_initial_inv = self.totals_summary['Inversion Total'].str.replace('$', '').astype(float).sum()
         return total_initial_inv
     
     def get_existing_investment(self):
@@ -144,7 +144,7 @@ class DataController:
         # print(self.last_week_data[['Fecha', 'Salida (Cantidad)', 'Perdida', 'Sale Value', 'Loss Value']])
 
     def get_weekly_data(self, monday, sunday):
-        week_data = self.data[(self.data['Fecha'] >= monday) & (self.data['Fecha'] <= sunday) & (self.data["Deleted"] != 1)].copy()
+        week_data = self.data[(self.data['Fecha'] >= monday) & (self.data['Fecha'] <= sunday) & (self.data["Borrado"] != 1)].copy()
 
         week_data.loc[:, 'Week Day'] = week_data['Fecha'].dt.weekday
         week_data.loc[:, 'Sale Value'] = week_data['Costo por Unidad'] * week_data['Salida (Cantidad)']
