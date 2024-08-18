@@ -51,7 +51,7 @@ class DataController:
         self.data.to_excel(self.data_file, index=False)
 
     def remove_data(self, part_number):
-        self.data.loc[self.data['No. Parte'] == part_number, 'Deleted'] = 1
+        self.data.loc[self.data['No. Parte'] == part_number, 'Borrado'] = 1
         self.save_data_to_excel()
 
     def reset_data_index(self):
@@ -59,12 +59,12 @@ class DataController:
 
     def filter_by_part_number(self, part_number):
         result = self.data[(self.data["No. Parte"] == part_number) & 
-                           (self.data["Deleted"] != 1)].sort_values(by = 'Created', ascending = False)
+                           (self.data["Borrado"] != 1)].sort_values(by = 'Creado', ascending = False)
         
         if len(result) < 1:
             result = pd.DataFrame([[np.nan] * len(result.columns)], columns = result.columns)
             result['Fecha'] = [pd.to_datetime("today")]
-            result['Created'] = [pd.to_datetime("today")]
+            result['Creado'] = [pd.to_datetime("today")]
 
             result['Descripcion'] = ['']
             result['No. Parte'] = ['']
@@ -80,7 +80,7 @@ class DataController:
         if len(result) < 1:
             result = pd.DataFrame([[np.nan] * len(result.columns)], columns = result.columns)
             result['Fecha'] = [pd.to_datetime("today")]
-            result['Created'] = [pd.to_datetime("today")]
+            result['Creado'] = [pd.to_datetime("today")]
 
             result['Descripcion'] = ['']
             result['No. Parte'] = ['']
@@ -91,7 +91,7 @@ class DataController:
             
         else:
             result['Costo por Unidad'] = result['Costo por Unidad'].str.replace('$', '').astype(float)    
-            result['Fecha'] = self.data[(self.data["No. Parte"] == part_number) & (self.data["Deleted"] != 1)].sort_values(by = 'Created', ascending = False)['Fecha'].iloc[0]
+            result['Fecha'] = self.data[(self.data["No. Parte"] == part_number) & (self.data["Borrado"] != 1)].sort_values(by = 'Creado', ascending = False)['Fecha'].iloc[0]
         
         return result.iloc[0]
 
