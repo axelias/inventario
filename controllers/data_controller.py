@@ -40,7 +40,7 @@ class DataController:
         self.data.sort_values(by = 'Creado', ascending = False, inplace = True)
 
         #extract part numbers
-        self.part_numbers = self.data[self.data["Deleted"] != 1]["No. Parte"].dropna().unique().tolist()
+        self.part_numbers = self.data[self.data["Borrado"] != 1]["No. Parte"].dropna().unique().tolist()
 
     def save_data(self, row):
         row = pd.DataFrame([row], columns = self.data.columns)
