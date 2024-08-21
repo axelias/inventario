@@ -109,7 +109,7 @@ class Inventario(AuthController, DataController):
         with col1:
             options = ["Seleccionar existente", "Ingresar nuevo", "Borrar existente"]
             operation = st.selectbox("Seleccionar Operacion",
-                                        options = options, index = None)
+                                        options = options, index = None, placeholder= "Seleccione una Opcion")
 
             if operation == options[0]:
                 st.session_state.operation = 1

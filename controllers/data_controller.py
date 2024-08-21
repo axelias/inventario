@@ -35,7 +35,7 @@ class DataController:
         # self.data['Fecha'] = self.data['Fecha'].dt.strftime('%d/%m/%Y')
 
         #clean data and convert data types
-        self.data["Existencia Actual (Valor)"] = self.data["Existencia Actual (Valor)"].replace(r'[\$,]', '', regex=True).astype(float)
+        self.data["Existencia Actual (Valor)"] = self.data["Existencia Actual (Valor)"].replace(r'[\$,]', '', regex=True) #.astype(float)
 
         self.data.sort_values(by = "Creado", ascending = False, inplace = True)
 
@@ -45,6 +45,8 @@ class DataController:
     def save_data(self, row):
         row = pd.DataFrame([row], columns = self.data.columns)
         self.data = pd.concat([row, self.data])
+        self.data['Fecha'] = pd.to_datetime(self.data['Fecha'])
+        # print(self.data)
         self.save_data_to_excel()
         
     def save_data_to_excel(self):
@@ -112,11 +114,17 @@ class DataController:
         self.totals_summary = summary
 
     def get_initial_investment(self):
-        total_initial_inv = self.totals_summary["Inversion Total"].str.replace('$', '').astype(float).sum()
+        if len(self.totals_summary) == 0:
+            total_initial_inv = 0.0
+        else:
+            total_initial_inv = self.totals_summary["Inversion Total"].str.replace('$', '').astype(float).sum()
         return total_initial_inv
     
     def get_existing_investment(self):
-        total_existing_inv = self.totals_summary['Existencia Actual (Valor)'].str.replace('$', '').astype(float).sum()
+        if len(self.totals_summary) == 0:
+            total_existing_inv = 0.0
+        else:
+            total_existing_inv = self.totals_summary['Existencia Actual (Valor)'].str.replace('$', '').astype(float).sum()
         return total_existing_inv
     
     def get_sold_value(self):
@@ -126,7 +134,8 @@ class DataController:
         history = self.data.copy(deep = True)
         cols = ['Existencia Actual (Valor)', 'Costo por Unidad']
         history[cols] = history[cols].apply(lambda x: x.apply(lambda y: f'${y}'))
-        history['Fecha'] = history['Fecha'].dt.strftime('%d/%m/%Y')
+        if len(history) > 0:
+            history['Fecha'] = history['Fecha'].dt.strftime('%d/%m/%Y')
         return history
     
     def set_weekly_data(self):
@@ -146,11 +155,18 @@ class DataController:
     def get_weekly_data(self, monday, sunday):
         week_data = self.data[(self.data['Fecha'] >= monday) & (self.data['Fecha'] <= sunday) & (self.data["Borrado"] != 1)].copy()
 
-        week_data.loc[:, 'Week Day'] = week_data['Fecha'].dt.weekday
-        week_data.loc[:, "Valor de Venta"] = week_data['Costo por Unidad'] * week_data['Salida (Cantidad)']
-        week_data.loc[:, "Valor de Perdida"] = week_data['Costo por Unidad'] * week_data['Perdida']
-        week_data.sort_values(by = 'Fecha', ascending = True)
-        week_data.loc[:, 'Fecha'] = week_data['Fecha'].dt.strftime('%d/%m/%Y')
+        if len(week_data) > 0:
+            week_data.loc[:, 'Week Day'] = week_data['Fecha'].dt.weekday
+            week_data.loc[:, "Valor de Venta"] = week_data['Costo por Unidad'] * week_data['Salida (Cantidad)']
+            week_data.loc[:, "Valor de Perdida"] = week_data['Costo por Unidad'] * week_data['Perdida']
+            week_data.sort_values(by = 'Fecha', ascending = True)
+            week_data.loc[:, 'Fecha'] = week_data['Fecha'].dt.strftime('%d/%m/%Y')
+        else:
+            week_data.loc[:, 'Week Day'] = []
+            week_data.loc[:, "Valor de Venta"] = []
+            week_data.loc[:, "Valor de Perdida"] = []
+        
+        # print(week_data)
 
         return week_data
 
@@ -160,8 +176,8 @@ class DataController:
         self.weekly_summary.reset_index(inplace = True)
         cols = ["Valor de Venta", "Valor de Perdida", 'Costo por Unidad']
         self.weekly_summary[cols] = self.weekly_summary[cols].apply(lambda x: x.apply(lambda y: f'${y}'))
-        self.weekly_summary['Fecha'] =  self.weekly_summary['Fecha'].dt.strftime('%d/%m/%Y')
-
+        # if len(self.weekly_summary) > 0:
+        #     self.weekly_summary['Fecha'] =  self.weekly_summary['Fecha'].dt.strftime('%d/%m/%Y')
 
     
     def get_total_weekly_sales(self):
@@ -257,7 +273,7 @@ class DataController:
             y=alt.Y(f'{cols2[1]}:Q'),
         )
 
-        chart_text2 = alt.Chart(data2).mark_text(dy=-10, color='black', size = 14).encode(
+        chart_text2 = alt.Chart(data2).mark_text(dy=-10, color='#d92232', size = 14).encode(
             x=alt.X(f'{cols2[0]}:O', 
                     sort = day_order, 
                     title = f"{cols2[0]}",
