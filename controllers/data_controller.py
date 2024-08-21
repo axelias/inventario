@@ -37,10 +37,10 @@ class DataController:
         #clean data and convert data types
         self.data["Existencia Actual (Valor)"] = self.data["Existencia Actual (Valor)"].replace(r'[\$,]', '', regex=True).astype(float)
 
-        self.data.sort_values(by = 'Created', ascending = False, inplace = True)
+        self.data.sort_values(by = "Creado", ascending = False, inplace = True)
 
         #extract part numbers
-        self.part_numbers = self.data[self.data["Deleted"] != 1]["No. Parte"].dropna().unique().tolist()
+        self.part_numbers = self.data[self.data["Borrado"] != 1]["No. Parte"].dropna().unique().tolist()
 
     def save_data(self, row):
         row = pd.DataFrame([row], columns = self.data.columns)
@@ -51,7 +51,7 @@ class DataController:
         self.data.to_excel(self.data_file, index=False)
 
     def remove_data(self, part_number):
-        self.data.loc[self.data['No. Parte'] == part_number, 'Deleted'] = 1
+        self.data.loc[self.data['No. Parte'] == part_number, "Borrado"] = 1
         self.save_data_to_excel()
 
     def reset_data_index(self):
@@ -59,12 +59,12 @@ class DataController:
 
     def filter_by_part_number(self, part_number):
         result = self.data[(self.data["No. Parte"] == part_number) & 
-                           (self.data["Deleted"] != 1)].sort_values(by = 'Created', ascending = False)
+                           (self.data["Borrado"] != 1)].sort_values(by = "Creado", ascending = False)
         
         if len(result) < 1:
             result = pd.DataFrame([[np.nan] * len(result.columns)], columns = result.columns)
             result['Fecha'] = [pd.to_datetime("today")]
-            result['Created'] = [pd.to_datetime("today")]
+            result["Creado"] = [pd.to_datetime("today")]
 
             result['Descripcion'] = ['']
             result['No. Parte'] = ['']
@@ -80,7 +80,7 @@ class DataController:
         if len(result) < 1:
             result = pd.DataFrame([[np.nan] * len(result.columns)], columns = result.columns)
             result['Fecha'] = [pd.to_datetime("today")]
-            result['Created'] = [pd.to_datetime("today")]
+            result["Creado"] = [pd.to_datetime("today")]
 
             result['Descripcion'] = ['']
             result['No. Parte'] = ['']
@@ -91,28 +91,28 @@ class DataController:
             
         else:
             result['Costo por Unidad'] = result['Costo por Unidad'].str.replace('$', '').astype(float)    
-            result['Fecha'] = self.data[(self.data["No. Parte"] == part_number) & (self.data["Deleted"] != 1)].sort_values(by = 'Created', ascending = False)['Fecha'].iloc[0]
+            result['Fecha'] = self.data[(self.data["No. Parte"] == part_number) & (self.data["Borrado"] != 1)].sort_values(by = "Creado", ascending = False)['Fecha'].iloc[0]
         
         return result.iloc[0]
 
         
     def get_data_totals_summary(self):
-        current_data = self.data[(self.data["Deleted"] != 1)]
+        current_data = self.data[(self.data["Borrado"] != 1)]
         totals = current_data.groupby('No. Parte')[['Entrada (Cantidad)', 'Salida (Cantidad)', 'Perdida']].sum()
         totals.reset_index(inplace = True)
 
-        finals = current_data.sort_values(by=['No. Parte', 'Created'], ascending=[True, False])
+        finals = current_data.sort_values(by=['No. Parte', "Creado"], ascending=[True, False])
         finals = finals.drop_duplicates(subset='No. Parte', keep='first')
         finals = finals[['No. Parte', 'Descripcion', 'Unidad', 'Costo por Unidad', 'Existencia Actual', 'Existencia Actual (Valor)']]
         summary = pd.merge(finals, totals,  on='No. Parte', how='left')
-        summary['Total Investment'] = summary['Costo por Unidad'] * summary['Entrada (Cantidad)']
-        summary = summary[['No. Parte', 'Descripcion', 'Unidad', 'Costo por Unidad', 'Entrada (Cantidad)', 'Salida (Cantidad)', 'Perdida', 'Existencia Actual', 'Total Investment', 'Existencia Actual (Valor)']]
-        cols = ['Total Investment', 'Existencia Actual (Valor)', 'Costo por Unidad']
+        summary["Inversion Total"] = summary['Costo por Unidad'] * summary['Entrada (Cantidad)']
+        summary = summary[['No. Parte', 'Descripcion', 'Unidad', 'Costo por Unidad', 'Entrada (Cantidad)', 'Salida (Cantidad)', 'Perdida', 'Existencia Actual', "Inversion Total", 'Existencia Actual (Valor)']]
+        cols = ["Inversion Total", 'Existencia Actual (Valor)', 'Costo por Unidad']
         summary[cols] = summary[cols].apply(lambda x: x.apply(lambda y: f'${y}'))
         self.totals_summary = summary
 
     def get_initial_investment(self):
-        total_initial_inv = self.totals_summary['Total Investment'].str.replace('$', '').astype(float).sum()
+        total_initial_inv = self.totals_summary["Inversion Total"].str.replace('$', '').astype(float).sum()
         return total_initial_inv
     
     def get_existing_investment(self):
@@ -140,15 +140,15 @@ class DataController:
         last_sunday = sunday - timedelta(days=7)
         self.weekly_data = self.get_weekly_data(monday, sunday)
         self.last_week_data = self.get_weekly_data(last_monday, last_sunday)
-        # print(self.weekly_data[['Fecha', 'Salida (Cantidad)', 'Perdida', 'Sale Value', 'Loss Value']])
-        # print(self.last_week_data[['Fecha', 'Salida (Cantidad)', 'Perdida', 'Sale Value', 'Loss Value']])
+        # print(self.weekly_data[['Fecha', 'Salida (Cantidad)', 'Perdida', "Valor de Venta", "Valor de Perdida"]])
+        # print(self.last_week_data[['Fecha', 'Salida (Cantidad)', 'Perdida', "Valor de Venta", "Valor de Perdida"]])
 
     def get_weekly_data(self, monday, sunday):
-        week_data = self.data[(self.data['Fecha'] >= monday) & (self.data['Fecha'] <= sunday) & (self.data["Deleted"] != 1)].copy()
+        week_data = self.data[(self.data['Fecha'] >= monday) & (self.data['Fecha'] <= sunday) & (self.data["Borrado"] != 1)].copy()
 
         week_data.loc[:, 'Week Day'] = week_data['Fecha'].dt.weekday
-        week_data.loc[:, 'Sale Value'] = week_data['Costo por Unidad'] * week_data['Salida (Cantidad)']
-        week_data.loc[:, 'Loss Value'] = week_data['Costo por Unidad'] * week_data['Perdida']
+        week_data.loc[:, "Valor de Venta"] = week_data['Costo por Unidad'] * week_data['Salida (Cantidad)']
+        week_data.loc[:, "Valor de Perdida"] = week_data['Costo por Unidad'] * week_data['Perdida']
         week_data.sort_values(by = 'Fecha', ascending = True)
         week_data.loc[:, 'Fecha'] = week_data['Fecha'].dt.strftime('%d/%m/%Y')
 
@@ -156,14 +156,16 @@ class DataController:
 
 
     def get_weekly_summary(self):
-        self.weekly_summary = self.weekly_data.groupby(['Fecha', 'Descripcion', 'No. Parte', 'Unidad', 'Costo por Unidad'])[['Salida (Cantidad)', 'Perdida', 'Sale Value', 'Loss Value']].sum()
+        self.weekly_summary = self.weekly_data.groupby(['Fecha', 'Descripcion', 'No. Parte', 'Unidad', 'Costo por Unidad'])[['Salida (Cantidad)', 'Perdida', "Valor de Venta", "Valor de Perdida"]].sum()
         self.weekly_summary.reset_index(inplace = True)
-        cols = ['Sale Value', 'Loss Value', 'Costo por Unidad']
+        cols = ["Valor de Venta", "Valor de Perdida", 'Costo por Unidad']
         self.weekly_summary[cols] = self.weekly_summary[cols].apply(lambda x: x.apply(lambda y: f'${y}'))
+        self.weekly_summary['Fecha'] =  self.weekly_summary['Fecha'].dt.strftime('%d/%m/%Y')
+
 
     
     def get_total_weekly_sales(self):
-        return self.get_total_weekly_data('Sale Value', 'Salida (Cantidad)')
+        return self.get_total_weekly_data("Valor de Venta", 'Salida (Cantidad)')
 
     def get_total_weekly_data(self, amount_col, num_col):
         #find this week total amount and value
@@ -188,7 +190,7 @@ class DataController:
         return weekly_value, weekly_amount, round(amount_change_percent), round(value_change_percent)
 
     def get_total_weekly_losses(self):
-        return self.get_total_weekly_data('Loss Value', 'Perdida')
+        return self.get_total_weekly_data("Valor de Perdida", 'Perdida')
     
     def get_weekly_graph_data(self, col):
         weekly_sales = self.weekly_data.groupby('Week Day')[col].sum()
@@ -210,8 +212,8 @@ class DataController:
         return weekly_sales, cols
     
     def get_weekly_amount_graph(self, title):
-        weekly_sales, cols_sales = self.get_weekly_graph_data('Sale Value')
-        weekly_losses, cols_losses = self.get_weekly_graph_data('Loss Value')
+        weekly_sales, cols_sales = self.get_weekly_graph_data("Valor de Venta")
+        weekly_losses, cols_losses = self.get_weekly_graph_data("Valor de Perdida")
         return self.prepare_combined_chart(weekly_sales, cols_sales, weekly_losses, cols_losses, title, 'green', '#d92232')
     
     def get_weekly_value_graph(self, title):

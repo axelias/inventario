@@ -164,7 +164,7 @@ class Inventario(AuthController, DataController):
             c1, c2 = st.columns(2)
             with c1:
                 date = st.date_input("Fecha", 
-                                value = part_details['Fecha'], 
+                                # value = part_details['Fecha'], 
                                 format ="DD-MM-YYYY",
                                 disabled = is_completely_disabled,
                                 key = 'fecha')
