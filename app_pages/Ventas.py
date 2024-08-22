@@ -40,11 +40,11 @@ class Ventas(AuthController, DataController):
 
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.metric(label="Total de Ventas Semanales", value=f"{total_weekly_sales} Units", delta=f"{sales_value_change_percent}%")
+            st.metric(label="Total de Ventas Semanales", value=f"{total_weekly_sales} Unidades", delta=f"{sales_value_change_percent}%")
         with col2:
             st.metric(label="Total de Ventas Semanales (Valor)", value=f"${total_weekly_sales_amount}", delta=f"{sales_amount_change_percent}%")
         with col3:
-            st.metric(label="Total de Perdidas Semanales", value=f"{total_weekly_losses} Units", delta=f"{loss_value_change_percent}%")
+            st.metric(label="Total de Perdidas Semanales", value=f"{total_weekly_losses} Unidades", delta=f"{loss_value_change_percent}%")
         with col4:
             st.metric(label="Total de Perdidas Semanales (Valor)", value=f"${total_weekly_losses_amount}", delta=f"{loss_amount_change_percent}%")
 
