@@ -3,7 +3,7 @@ import numpy as np
 from datetime import datetime, timedelta
 import calendar
 import altair as alt
-import math
+from controllers.sync_controller import SyncController
 
 
 
@@ -18,6 +18,13 @@ class DataController:
         self.weekly_data = None
         self.last_week_data = None
         self.weekly_summary = None
+        self.sync = SyncController()
+        if self.sync.sync == 0: # if file is not synchronized
+            self.data = self.sync.load_dataframe_from_drive() # get data from drive
+            self.data.to_excel(self.data_file, index=False)   # save it locally
+            self.sync.update_status()                         # update synchronization status
+            print('------Data Loaded from Drive------')
+
         self.load_data()
         self.get_data_totals_summary()
         self.set_weekly_data()
@@ -25,6 +32,7 @@ class DataController:
 
     def load_data(self):
         #read data
+        # self.data = load_dataframe_from_drive(self.data_file.split("/")[-1])
         self.data = pd.read_excel(self.data_file, engine='openpyxl', parse_dates=[0, 11])
 
         #start indices from 1
@@ -51,6 +59,9 @@ class DataController:
         
     def save_data_to_excel(self):
         self.data.to_excel(self.data_file, index=False)
+        self.sync.upload_file_to_drive()
+        self.sync.update_status()
+        print('------Data Saved to Drive------')
 
     def remove_data(self, part_number):
         self.data.loc[self.data['No. Parte'] == part_number, "Borrado"] = 1

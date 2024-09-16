@@ -31,5 +31,6 @@ class Navbar():
         for pg in self.pages:
             if selected_page == pg:
                 page = self.pages[selected_page](self.auth)
+                #page= Inventario(self.auth)
                 page.show()  
                 break      

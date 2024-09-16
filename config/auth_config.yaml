@@ -3,13 +3,13 @@ credentials:
     inv247:
       email: alexiseliasjw@gmail.com
       name: Alexis Elias
-      password: $2b$12$Xu2JjAyrmSCvOe.z8R4g4.IU6q8fAOj6AnzDrrYMeq/WXYxjKlXqm # To be replaced with hashed password
+      password: $2b$12$4F8Pzithd7DDIl1PjBxPfe1aEyGCc7MaPH3THmJeU8qMGcXW/CWC. # To be replaced with hashed password
     # rbriggs:
     #   email: rbriggs@gmail.com
     #   name: Rebecca Briggs
     #   password: def # To be replaced with hashed password
 cookie:
-  expiry_days: 30
+  expiry_days: 1
   key: admin_signature_key # Must be string
   name: admin_cookie
 preauthorized:
