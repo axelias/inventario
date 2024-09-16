@@ -2,7 +2,7 @@
     "sync": 1,
     "scopes": "https://www.googleapis.com/auth/drive",
     "drive_config_path": "config/drive_config.json",
-    "parent_folder": "1L55kXg5nvA1MzUIrqIXaBl195HVFOyFK",
+    "parent_folder": "1mio5h3NJ1LD_EFCcTCxwAB9QsBfSu65k",
     "data_file_local_path": "res/data.xlsx",
     "data_file_name": "data.xlsx"
 }
